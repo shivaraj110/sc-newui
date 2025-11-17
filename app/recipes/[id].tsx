@@ -27,8 +27,7 @@ export default function RecipeDetailScreen() {
   };
 
   const handleStartCooking = () => {
-    // Mock start cooking - could navigate to cooking mode
-    console.log('Start cooking recipe:', recipe.id);
+    router.push('/timer');
   };
 
   return (
