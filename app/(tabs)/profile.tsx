@@ -1,8 +1,9 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, Alert } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { Alert } from '../components/AlertProvider';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -10,44 +11,38 @@ export default function ProfileScreen() {
   const handleMenuAction = (action: string) => {
     switch (action) {
       case 'edit':
-        Alert.alert('Edit Profile', 'Edit profile functionality coming soon!');
+        Alert.alert('Edit Profile', 'Edit profile functionality coming soon!', undefined, { type: 'info' });
         break;
       case 'recipes':
-        Alert.alert('My Recipes', 'Showing your created recipes...');
+        Alert.alert('My Recipes', 'Showing your created recipes...', undefined, { type: 'info' });
+        break;
+      case 'inventory':
+        router.push('/inventory');
         break;
       case 'settings':
-        Alert.alert('Settings', 'Settings page coming soon!');
+        Alert.alert('Settings', 'Settings page coming soon!', undefined, { type: 'info' });
         break;
       case 'notifications':
-        Alert.alert('Notifications', 'Notification settings coming soon!');
+        Alert.alert('Notifications', 'Notification settings coming soon!', undefined, { type: 'info' });
         break;
       case 'help':
-        Alert.alert('Help & Support', 'Help center and support options coming soon!');
+        Alert.alert('Help & Support', 'Help center and support options coming soon!', undefined, { type: 'info' });
         break;
       case 'about':
-        Alert.alert('About ShelfCook', 'ShelfCook v1.0.0\n\nYour personal cooking companion for discovering, creating, and planning delicious meals.');
+        Alert.alert('About ShelfCook', 'ShelfCook v1.0.0\n\nYour personal cooking companion for discovering, creating, and planning delicious meals.', undefined, { type: 'info' });
         break;
     }
   };
 
   const handleEditProfile = () => {
-    Alert.alert('Edit Profile', 'Profile editing functionality coming soon!');
+    Alert.alert('Edit Profile', 'Profile editing functionality coming soon!', undefined, { type: 'info' });
   };
 
   const handleLogout = () => {
-    Alert.alert(
+    Alert.confirm(
       'Logout',
       'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Logout', 
-          style: 'destructive',
-          onPress: () => {
-            Alert.alert('Logged Out', 'You have been successfully logged out.');
-          }
-        }
-      ]
+      () => Alert.success('Logged Out', 'You have been successfully logged out.')
     );
   };
 
@@ -60,6 +55,7 @@ export default function ProfileScreen() {
   const menuItems = [
     { title: 'Edit Profile', icon: 'person-outline', color: '#0ea5e9', bgColor: '#e0f2fe', action: 'edit' },
     { title: 'My Recipes', icon: 'restaurant-outline', color: '#10b981', bgColor: '#ecfdf5', action: 'recipes' },
+    { title: 'My Inventory', icon: 'storefront-outline', color: '#f59e0b', bgColor: '#fef3c7', action: 'inventory' },
     { title: 'Settings', icon: 'settings-outline', color: '#6b7280', bgColor: '#f1f5f9', action: 'settings' },
     { title: 'Notifications', icon: 'notifications-outline', color: '#f59e0b', bgColor: '#fef3c7', action: 'notifications' },
     { title: 'Help & Support', icon: 'help-circle-outline', color: '#a855f7', bgColor: '#f3e8ff', action: 'help' },
@@ -134,7 +130,7 @@ export default function ProfileScreen() {
               <Ionicons name="heart" size={16} color="#10b981" />
             </View>
             <View style={styles.activityContent}>
-              <Text style={styles.activityTitle}>Liked "Spaghetti Carbonara"</Text>
+              <Text style={styles.activityTitle}>Liked &quot;Spaghetti Carbonara&quot;</Text>
               <Text style={styles.activityTime}>2 hours ago</Text>
             </View>
           </View>
@@ -144,7 +140,7 @@ export default function ProfileScreen() {
               <Ionicons name="create" size={16} color="#f59e0b" />
             </View>
             <View style={styles.activityContent}>
-              <Text style={styles.activityTitle}>Created "Chicken Tikka"</Text>
+              <Text style={styles.activityTitle}>Created &quot;Chicken Tikka&quot;</Text>
               <Text style={styles.activityTime}>1 day ago</Text>
             </View>
           </View>
@@ -154,7 +150,7 @@ export default function ProfileScreen() {
               <Ionicons name="bookmark" size={16} color="#0ea5e9" />
             </View>
             <View style={styles.activityContent}>
-              <Text style={styles.activityTitle}>Saved to "Quick Meals"</Text>
+              <Text style={styles.activityTitle}>Saved to &quot;Quick Meals&quot;</Text>
               <Text style={styles.activityTime}>3 days ago</Text>
             </View>
           </View>

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, StyleSheet, ImageBackground } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ImageBackground } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Recipe } from '../data/recipes';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Alert } from './AlertProvider';
 
 interface RecipeDetailProps {
   recipe: Recipe;
@@ -33,13 +34,10 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
   };
 
   const handleAddToShoppingList = () => {
-    Alert.alert(
+    Alert.confirm(
       'Add to Shopping List',
       'Add all ingredients to your shopping list?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Add', onPress: onAddToShoppingList },
-      ]
+      onAddToShoppingList
     );
   };
 
@@ -54,33 +52,52 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
             imageStyle={styles.headerImageStyle}
           >
             <LinearGradient
-              colors={['rgba(0,0,0,0.3)', 'transparent', 'rgba(0,0,0,0.7)']}
+              colors={['rgba(0,0,0,0.4)', 'transparent', 'rgba(0,0,0,0.8)']}
               style={styles.headerGradient}
             >
               <View style={styles.headerOverlay}>
                 <TouchableOpacity onPress={onBack} style={styles.headerButton}>
-                  <Ionicons name="arrow-back" size={24} color="white" />
+                  <View style={styles.headerButtonInner}>
+                    <Ionicons name="arrow-back" size={24} color="white" />
+                  </View>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={onFavoriteToggle} style={styles.headerButton}>
-                  <Ionicons
-                    name={recipe.isFavorite ? "heart" : "heart-outline"}
-                    size={24}
-                    color={recipe.isFavorite ? "#ef4444" : "white"}
-                  />
-                </TouchableOpacity>
+                <View style={styles.headerActions}>
+                  <TouchableOpacity
+                    onPress={() => Alert.success('Share Recipe', 'Recipe shared successfully!')}
+                    style={styles.headerButton}
+                  >
+                    <View style={styles.headerButtonInner}>
+                      <Ionicons name="share-outline" size={22} color="white" />
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={onFavoriteToggle} style={styles.headerButton}>
+                    <View style={styles.headerButtonInner}>
+                      <Ionicons
+                        name={recipe.isFavorite ? "heart" : "heart-outline"}
+                        size={24}
+                        color={recipe.isFavorite ? "#ef4444" : "white"}
+                      />
+                    </View>
+                  </TouchableOpacity>
+                </View>
               </View>
 
               <View style={styles.headerContent}>
-                <Text style={styles.title}>{recipe.title}</Text>
-                <Text style={styles.description}>{recipe.description}</Text>
+                <View style={styles.titleContainer}>
+                  <Text style={styles.title}>{recipe.title}</Text>
+                  <Text style={styles.description}>{recipe.description}</Text>
+                </View>
                 
                 {recipe.rating && (
                   <View style={styles.ratingContainer}>
                     <View style={styles.ratingBadge}>
-                      <Ionicons name="star" size={14} color="#fbbf24" />
+                      <Ionicons name="star" size={16} color="#fbbf24" />
                       <Text style={styles.ratingText}>{recipe.rating}</Text>
                     </View>
                     <Text style={styles.reviewsText}>({recipe.reviews?.toLocaleString()} reviews)</Text>
+                    <View style={styles.difficultyBadge}>
+                      <Text style={styles.difficultyText}>{recipe.difficulty}</Text>
+                    </View>
                   </View>
                 )}
               </View>
@@ -146,8 +163,12 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
               end={{ x: 1, y: 1 }}
               style={styles.actionGradient}
             >
-              <Ionicons name="basket" size={20} color="white" />
-              <Text style={styles.actionText}>Add to List</Text>
+              <View style={styles.actionContent}>
+                <View style={styles.actionIconContainer}>
+                  <Ionicons name="basket" size={22} color="white" />
+                </View>
+                <Text style={styles.actionText}>Add to List</Text>
+              </View>
             </LinearGradient>
           </TouchableOpacity>
 
@@ -158,26 +179,26 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
               end={{ x: 1, y: 1 }}
               style={styles.actionGradient}
             >
-              <Ionicons name="play" size={20} color="white" />
-              <Text style={styles.actionText}>Start Cooking</Text>
+              <View style={styles.actionContent}>
+                <View style={styles.actionIconContainer}>
+                  <Ionicons name="play" size={22} color="white" />
+                </View>
+                <Text style={styles.actionText}>Start Cooking</Text>
+              </View>
             </LinearGradient>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => Alert.alert('Share Recipe', 'Recipe shared successfully!')}
-            style={styles.secondaryAction}
-          >
-            <View style={styles.shareButton}>
-              <Ionicons name="share-outline" size={20} color="#0ea5e9" />
-            </View>
           </TouchableOpacity>
         </View>
 
         {/* Ingredients */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Ingredients ({recipe.ingredients.length})</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Ingredients</Text>
+            <View style={styles.sectionBadge}>
+              <Text style={styles.sectionBadgeText}>{recipe.ingredients.length}</Text>
+            </View>
+          </View>
           <View style={styles.ingredientsContainer}>
-            {recipe.ingredients.map((ingredient) => (
+            {recipe.ingredients.map((ingredient, index) => (
               <TouchableOpacity
                 key={ingredient.id}
                 onPress={() => toggleIngredient(ingredient.id)}
@@ -186,24 +207,34 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
                   checkedIngredients.has(ingredient.id) && styles.ingredientCardChecked
                 ]}
               >
-                <View style={styles.checkbox}>
-                  {checkedIngredients.has(ingredient.id) ? (
-                    <View style={styles.checkboxChecked}>
-                      <Ionicons name="checkmark" size={12} color="white" />
-                    </View>
-                  ) : (
-                    <View style={styles.checkboxUnchecked} />
-                  )}
+                <View style={styles.ingredientLeft}>
+                  <View style={styles.checkbox}>
+                    {checkedIngredients.has(ingredient.id) ? (
+                      <LinearGradient
+                        colors={['#10b981', '#059669']}
+                        style={styles.checkboxChecked}
+                      >
+                        <Ionicons name="checkmark" size={14} color="white" />
+                      </LinearGradient>
+                    ) : (
+                      <View style={styles.checkboxUnchecked} />
+                    )}
+                  </View>
+                  <View style={styles.ingredientInfo}>
+                    <Text style={[
+                      styles.ingredientText,
+                      checkedIngredients.has(ingredient.id) && styles.ingredientTextChecked
+                    ]}>
+                      {ingredient.name}
+                    </Text>
+                    <Text style={styles.ingredientAmount}>
+                      {ingredient.amount} {ingredient.unit}
+                    </Text>
+                  </View>
                 </View>
-                <Text style={[
-                  styles.ingredientText,
-                  checkedIngredients.has(ingredient.id) && styles.ingredientTextChecked
-                ]}>
-                  <Text style={styles.ingredientAmount}>
-                    {ingredient.amount} {ingredient.unit}
-                  </Text>
-                  {' '}{ingredient.name}
-                </Text>
+                <View style={styles.ingredientNumber}>
+                  <Text style={styles.ingredientNumberText}>{index + 1}</Text>
+                </View>
               </TouchableOpacity>
             ))}
           </View>
@@ -211,7 +242,12 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
 
         {/* Instructions */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Instructions ({recipe.instructions.length} steps)</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Instructions</Text>
+            <View style={styles.sectionBadge}>
+              <Text style={styles.sectionBadgeText}>{recipe.instructions.length}</Text>
+            </View>
+          </View>
           <View style={styles.instructionsContainer}>
             {recipe.instructions.map((instruction, index) => (
               <View key={index} style={styles.instructionCard}>
@@ -223,7 +259,9 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
                 >
                   <Text style={styles.instructionNumberText}>{index + 1}</Text>
                 </LinearGradient>
-                <Text style={styles.instructionText}>{instruction}</Text>
+                <View style={styles.instructionContent}>
+                  <Text style={styles.instructionText}>{instruction}</Text>
+                </View>
               </View>
             ))}
           </View>
@@ -231,34 +269,51 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
 
         {/* Nutrition */}
         <View style={[styles.section, styles.lastSection]}>
-          <Text style={styles.sectionTitle}>Nutrition (per serving)</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Nutrition</Text>
+            <View style={[styles.sectionBadge, { backgroundColor: '#10b981' }]}>
+              <Text style={styles.sectionBadgeText}>Per Serving</Text>
+            </View>
+          </View>
           <View style={styles.nutritionCard}>
             <View style={styles.nutritionGrid}>
               <View style={styles.nutritionItem}>
-                <View style={[styles.nutritionIcon, { backgroundColor: '#fef3c7' }]}>
-                  <Ionicons name="flame" size={16} color="#d97706" />
-                </View>
+                <LinearGradient
+                  colors={['#fbbf24', '#f59e0b']}
+                  style={styles.nutritionIcon}
+                >
+                  <Ionicons name="flame" size={18} color="white" />
+                </LinearGradient>
                 <Text style={styles.nutritionValue}>{recipe.nutrition.calories}</Text>
                 <Text style={styles.nutritionLabel}>Calories</Text>
               </View>
               <View style={styles.nutritionItem}>
-                <View style={[styles.nutritionIcon, { backgroundColor: '#ecfdf5' }]}>
-                  <Ionicons name="fitness" size={16} color="#059669" />
-                </View>
+                <LinearGradient
+                  colors={['#10b981', '#059669']}
+                  style={styles.nutritionIcon}
+                >
+                  <Ionicons name="fitness" size={18} color="white" />
+                </LinearGradient>
                 <Text style={styles.nutritionValue}>{recipe.nutrition.protein}g</Text>
                 <Text style={styles.nutritionLabel}>Protein</Text>
               </View>
               <View style={styles.nutritionItem}>
-                <View style={[styles.nutritionIcon, { backgroundColor: '#e0f2fe' }]}>
-                  <Ionicons name="nutrition" size={16} color="#0284c7" />
-                </View>
+                <LinearGradient
+                  colors={['#0ea5e9', '#0284c7']}
+                  style={styles.nutritionIcon}
+                >
+                  <Ionicons name="nutrition" size={18} color="white" />
+                </LinearGradient>
                 <Text style={styles.nutritionValue}>{recipe.nutrition.carbs}g</Text>
                 <Text style={styles.nutritionLabel}>Carbs</Text>
               </View>
               <View style={styles.nutritionItem}>
-                <View style={[styles.nutritionIcon, { backgroundColor: '#fef2f2' }]}>
-                  <Ionicons name="water" size={16} color="#dc2626" />
-                </View>
+                <LinearGradient
+                  colors={['#ef4444', '#dc2626']}
+                  style={styles.nutritionIcon}
+                >
+                  <Ionicons name="water" size={18} color="white" />
+                </LinearGradient>
                 <Text style={styles.nutritionValue}>{recipe.nutrition.fat}g</Text>
                 <Text style={styles.nutritionLabel}>Fat</Text>
               </View>
@@ -309,51 +364,63 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
   headerButton: {
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    padding: 12,
-    borderRadius: 16,
-    backdropFilter: 'blur(10px)',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 18,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 4,
   },
+  headerButtonInner: {
+    padding: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   headerContent: {
     marginTop: 'auto',
   },
+  titleContainer: {
+    marginBottom: 12,
+  },
   title: {
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 32,
+    fontWeight: '900',
     color: 'white',
     marginBottom: 8,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowColor: 'rgba(0, 0, 0, 0.4)',
     textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    textShadowRadius: 6,
+    lineHeight: 38,
   },
   description: {
-    fontSize: 16,
+    fontSize: 17,
     color: 'rgba(255,255,255,0.95)',
-    lineHeight: 22,
-    marginBottom: 12,
+    lineHeight: 24,
+    fontWeight: '400',
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 12,
   },
   ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.95)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 18,
   },
   ratingText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '800',
     color: '#1e293b',
     marginLeft: 4,
   },
@@ -361,6 +428,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'rgba(255,255,255,0.95)',
     fontWeight: '500',
+  },
+  difficultyBadge: {
+    backgroundColor: 'rgba(16, 185, 129, 0.95)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  difficultyText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: 'white',
   },
   statsContainer: {
     flexDirection: 'row',
@@ -422,43 +500,38 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 20,
     marginBottom: 32,
-    gap: 12,
+    gap: 16,
   },
   primaryAction: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: 18,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 8,
   },
   actionGradient: {
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+  },
+  actionContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    gap: 8,
+    gap: 12,
+  },
+  actionIconContainer: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    padding: 8,
+    borderRadius: 10,
   },
   actionText: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '800',
     color: 'white',
-  },
-  secondaryAction: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  shareButton: {
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
+    letterSpacing: 0.5,
   },
   section: {
     paddingHorizontal: 20,
@@ -467,132 +540,178 @@ const styles = StyleSheet.create({
   lastSection: {
     marginBottom: 100,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 18,
+  },
   sectionTitle: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 24,
+    fontWeight: '900',
     color: '#1e293b',
-    marginBottom: 16,
+  },
+  sectionBadge: {
+    backgroundColor: '#0ea5e9',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  sectionBadgeText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: 'white',
   },
   ingredientsContainer: {
-    gap: 8,
+    gap: 12,
   },
   ingredientCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: 'white',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    borderRadius: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
   },
   ingredientCardChecked: {
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#f0fdf4',
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
+  },
+  ingredientLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   checkbox: {
     marginRight: 16,
   },
   checkboxUnchecked: {
-    width: 20,
-    height: 20,
-    borderWidth: 2,
+    width: 24,
+    height: 24,
+    borderWidth: 2.5,
     borderColor: '#e2e8f0',
-    borderRadius: 6,
+    borderRadius: 8,
   },
   checkboxChecked: {
-    width: 20,
-    height: 20,
-    backgroundColor: '#10b981',
-    borderRadius: 6,
+    width: 24,
+    height: 24,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  ingredientText: {
+  ingredientInfo: {
     flex: 1,
+  },
+  ingredientText: {
     fontSize: 16,
+    fontWeight: '600',
     color: '#1e293b',
     lineHeight: 22,
+    marginBottom: 2,
   },
   ingredientTextChecked: {
     textDecorationLine: 'line-through',
     color: '#64748b',
   },
   ingredientAmount: {
+    fontSize: 14,
     fontWeight: '700',
     color: '#0ea5e9',
   },
-  instructionsContainer: {
-    gap: 16,
-  },
-  instructionCard: {
-    flexDirection: 'row',
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  instructionNumber: {
+  ingredientNumber: {
+    backgroundColor: '#f1f5f9',
     width: 32,
     height: 32,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+  },
+  ingredientNumberText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#64748b',
+  },
+  instructionsContainer: {
+    gap: 20,
+  },
+  instructionCard: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    padding: 24,
+    borderRadius: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  instructionNumber: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 18,
     flexShrink: 0,
   },
   instructionNumberText: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: '800',
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  instructionContent: {
+    flex: 1,
   },
   instructionText: {
-    flex: 1,
     fontSize: 16,
     color: '#374151',
-    lineHeight: 24,
+    lineHeight: 26,
+    fontWeight: '500',
   },
   nutritionCard: {
     backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 18,
+    padding: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 8,
   },
   nutritionGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 8,
   },
   nutritionItem: {
     flex: 1,
     alignItems: 'center',
   },
   nutritionIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   nutritionValue: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 20,
+    fontWeight: '900',
     color: '#1e293b',
     marginBottom: 4,
   },
   nutritionLabel: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#64748b',
-    fontWeight: '600',
+    fontWeight: '700',
+    textAlign: 'center',
   },
 });

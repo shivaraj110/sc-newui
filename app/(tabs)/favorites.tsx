@@ -1,9 +1,10 @@
-import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet, Alert } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { mockRecipes } from "../data/recipes";
 import { LinearGradient } from 'expo-linear-gradient';
+import { Alert } from '../components/AlertProvider';
 
 export default function FavoritesScreen() {
   const router = useRouter();
@@ -16,27 +17,18 @@ export default function FavoritesScreen() {
 
   const handleFavoriteToggle = (recipeId: string, currentlyFavorite: boolean) => {
     if (currentlyFavorite) {
-      Alert.alert(
+      Alert.confirm(
         'Remove from Favorites',
         'Are you sure you want to remove this recipe from favorites?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Remove', 
-            style: 'destructive',
-            onPress: () => {
-              Alert.alert('Removed!', 'Recipe removed from favorites');
-            }
-          }
-        ]
+        () => Alert.success('Removed!', 'Recipe removed from favorites')
       );
     } else {
-      Alert.alert('Added!', 'Recipe added to favorites');
+      Alert.success('Added!', 'Recipe added to favorites');
     }
   };
 
   const handleCollectionPress = (collection: string) => {
-    Alert.alert(`${collection} Collection`, `Opening ${collection.toLowerCase()} collection...`);
+    Alert.alert(`${collection} Collection`, `Opening ${collection.toLowerCase()} collection...`, undefined, { type: 'info' });
   };
 
   return (

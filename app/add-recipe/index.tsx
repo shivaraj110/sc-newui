@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, ScrollView, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { View, Text, TextInput, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Alert } from '../components/AlertProvider';
 
 interface Ingredient {
   name: string;
@@ -52,25 +53,31 @@ export default function AddRecipeScreen() {
 
   const handleSave = () => {
     if (!title.trim()) {
-      Alert.alert('Error', 'Please enter a recipe title');
+      Alert.error('Error', 'Please enter a recipe title');
       return;
     }
 
     // Mock save - in real app would save to database
-    Alert.alert(
+    Alert.success(
       'Recipe Saved!',
       `"${title}" has been added to your recipes.`,
-      [
-        { text: 'Add Another', onPress: () => {
-          setTitle('');
-          setDescription('');
-          setCookTime('');
-          setServings('');
-          setIngredients([{ name: '', amount: '', unit: '' }]);
-          setInstructions(['']);
-        }},
-        { text: 'Done', onPress: () => router.back() }
-      ]
+      () => {
+        Alert.alert(
+          'What\'s Next?',
+          'Would you like to add another recipe or go back?',
+          [
+            { text: 'Add Another', onPress: () => {
+              setTitle('');
+              setDescription('');
+              setCookTime('');
+              setServings('');
+              setIngredients([{ name: '', amount: '', unit: '' }]);
+              setInstructions(['']);
+            }},
+            { text: 'Done', onPress: () => router.back() }
+          ]
+        );
+      }
     );
   };
 

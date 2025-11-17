@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert, StyleSheet, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Alert } from '../components/AlertProvider';
 
 export default function ScanScreen() {
   const router = useRouter();
@@ -40,17 +41,18 @@ export default function ScanScreen() {
       
       Alert.alert(
         'Ingredients Found! 🎉',
-        `Found: ${mockItems.join(', ')}\n\nWould you like to add these to your shopping list?`,
+        `Found: ${mockItems.join(', ')}\n\nWould you like to add these to your inventory?`,
         [
           { text: 'Cancel', style: 'cancel' },
           { 
-            text: 'Add to List', 
+            text: 'Add to Inventory', 
             onPress: () => {
-              Alert.alert('Success!', 'Ingredients added to shopping list');
-              router.back();
+              Alert.success('Success!', 'Ingredients added to inventory');
+              router.push('/inventory');
             }
           }
-        ]
+        ],
+        { type: 'success' }
       );
     }, 3000);
   };
@@ -181,7 +183,7 @@ export default function ScanScreen() {
 
         {/* Alternative Actions */}
         <View style={styles.alternativeActions}>
-          <TouchableOpacity style={styles.altAction} onPress={() => router.push('/add-recipe')}>
+          <TouchableOpacity style={styles.altAction} onPress={() => router.push('/shopping?autoAdd=true')}>
             <View style={styles.altActionIcon}>
               <Ionicons name="add-circle-outline" size={20} color="#0ea5e9" />
             </View>

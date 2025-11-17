@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, StyleSheet, Modal } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { mockShoppingList, shoppingCategories } from '../data/shoppingList';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Alert } from '../components/AlertProvider';
 
 export default function ShoppingScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const [shoppingList, setShoppingList] = useState(mockShoppingList);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -15,6 +17,13 @@ export default function ShoppingScreen() {
   const [newItemName, setNewItemName] = useState('');
   const [newItemAmount, setNewItemAmount] = useState('');
   const [newItemUnit, setNewItemUnit] = useState('pieces');
+
+  // Auto-open add modal if coming from manual entry
+  useEffect(() => {
+    if (params.autoAdd === 'true') {
+      setShowAddItem(true);
+    }
+  }, [params.autoAdd]);
 
   const toggleItem = (itemId: string) => {
     setShoppingList(prev =>
@@ -25,17 +34,10 @@ export default function ShoppingScreen() {
   };
 
   const deleteItem = (itemId: string) => {
-    Alert.alert(
+    Alert.confirm(
       'Delete Item',
       'Are you sure you want to remove this item?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => setShoppingList(prev => prev.filter(item => item.id !== itemId))
-        }
-      ]
+      () => setShoppingList(prev => prev.filter(item => item.id !== itemId))
     );
   };
 
@@ -61,16 +63,10 @@ export default function ShoppingScreen() {
     const completedCount = shoppingList.filter(item => item.isChecked).length;
     if (completedCount === 0) return;
 
-    Alert.alert(
+    Alert.confirm(
       'Clear Completed',
       `Remove ${completedCount} completed items from your list?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear',
-          onPress: () => setShoppingList(prev => prev.filter(item => !item.isChecked))
-        }
-      ]
+      () => setShoppingList(prev => prev.filter(item => !item.isChecked))
     );
   };
 

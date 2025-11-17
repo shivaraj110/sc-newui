@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { mockMealPlan, getMealsForDate } from '../data/mealPlan';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Alert } from '../components/AlertProvider';
 
 export default function MealPlanScreen() {
   const router = useRouter();
@@ -44,18 +45,10 @@ export default function MealPlanScreen() {
   };
 
   const handleGenerateShoppingList = () => {
-    Alert.alert(
+    Alert.confirm(
       'Generate Shopping List',
       'This will create a shopping list based on your meal plan. Continue?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Generate', 
-          onPress: () => {
-            router.push('/shopping');
-          }
-        }
-      ]
+      () => router.push('/shopping')
     );
   };
 

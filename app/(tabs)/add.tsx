@@ -3,6 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { LinearGradient } from 'expo-linear-gradient';
+import { Alert } from '../components/AlertProvider';
 
 export default function AddScreen() {
   const router = useRouter();
@@ -16,7 +17,7 @@ export default function AddScreen() {
         router.push('/scan');
         break;
       case 'import':
-        alert('Web import feature coming soon!');
+        Alert.alert('Web Import', 'Web import feature coming soon!', undefined, { type: 'info' });
         break;
       case 'shopping':
         router.push('/shopping');
