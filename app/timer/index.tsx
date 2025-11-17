@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Modal, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -245,7 +245,7 @@ export default function TimerScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
         <LinearGradient
           colors={['#0ea5e9', '#0284c7', '#0369a1']}
           start={{ x: 0, y: 0 }}
@@ -389,7 +389,7 @@ export default function TimerScreen() {
           )}
         </View>
 
-        <View style={[styles.presetsSection, styles.lastSection]}>
+        <View style={styles.presetsSection}>
           <Text style={styles.presetsTitle}>Quick Timers</Text>
           <View style={styles.presetsGrid}>
             {presetTimers.map((preset) => (
@@ -411,7 +411,7 @@ export default function TimerScreen() {
             ))}
           </View>
         </View>
-      </View>
+      </ScrollView>
 
       <CustomCompletionModal />
     </SafeAreaView>
@@ -425,6 +425,9 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 100,
   },
   header: {
     paddingHorizontal: 20,

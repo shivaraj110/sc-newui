@@ -13,6 +13,18 @@ export default function HomeScreen() {
     router.push(`/recipes/${recipeId}`);
   };
 
+  const handleCategoryPress = (category: string) => {
+    router.push({
+      pathname: '/search',
+      params: { category: category }
+    });
+  };
+
+  const handleFavoriteToggle = (recipeId: string) => {
+    // Toggle favorite status
+    console.log(`Toggling favorite for recipe ${recipeId}`);
+  };
+
   const handleQuickAction = (action: string) => {
     switch (action) {
       case 'scan':
@@ -73,7 +85,11 @@ export default function HomeScreen() {
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesContainer}>
             {categories.slice(0, 6).map((category, index) => (
-              <TouchableOpacity key={category} style={styles.categoryCard}>
+              <TouchableOpacity 
+                key={category} 
+                style={styles.categoryCard}
+                onPress={() => handleCategoryPress(category)}
+              >
                 <LinearGradient
                   colors={categoryGradients[index % categoryGradients.length]}
                   start={{ x: 0, y: 0 }}
@@ -90,12 +106,12 @@ export default function HomeScreen() {
 
         {/* Featured Recipes */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Featured Recipes</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAllText}>See All</Text>
-            </TouchableOpacity>
-          </View>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Featured Recipes</Text>
+              <TouchableOpacity onPress={() => router.push('/search')}>
+                <Text style={styles.seeAllText}>See All</Text>
+              </TouchableOpacity>
+            </View>
 
           {featuredRecipes.map((recipe, index) => (
             <TouchableOpacity
@@ -112,7 +128,10 @@ export default function HomeScreen() {
                   colors={['transparent', 'rgba(0,0,0,0.7)']}
                   style={styles.recipeGradient}
                 >
-                  <TouchableOpacity style={styles.favoriteButton}>
+                  <TouchableOpacity 
+                    style={styles.favoriteButton}
+                    onPress={() => handleFavoriteToggle(recipe.id)}
+                  >
                     <Ionicons
                       name={recipe.isFavorite ? "heart" : "heart-outline"}
                       size={22}

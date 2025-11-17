@@ -1,9 +1,56 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function ProfileScreen() {
+  const router = useRouter();
+  
+  const handleMenuAction = (action: string) => {
+    switch (action) {
+      case 'edit':
+        Alert.alert('Edit Profile', 'Edit profile functionality coming soon!');
+        break;
+      case 'recipes':
+        Alert.alert('My Recipes', 'Showing your created recipes...');
+        break;
+      case 'settings':
+        Alert.alert('Settings', 'Settings page coming soon!');
+        break;
+      case 'notifications':
+        Alert.alert('Notifications', 'Notification settings coming soon!');
+        break;
+      case 'help':
+        Alert.alert('Help & Support', 'Help center and support options coming soon!');
+        break;
+      case 'about':
+        Alert.alert('About ShelfCook', 'ShelfCook v1.0.0\n\nYour personal cooking companion for discovering, creating, and planning delicious meals.');
+        break;
+    }
+  };
+
+  const handleEditProfile = () => {
+    Alert.alert('Edit Profile', 'Profile editing functionality coming soon!');
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Logout', 
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert('Logged Out', 'You have been successfully logged out.');
+          }
+        }
+      ]
+    );
+  };
+
   const stats = [
     { label: 'Created', value: '23', icon: 'restaurant-outline' },
     { label: 'Favorites', value: '47', icon: 'heart-outline' },
@@ -11,12 +58,12 @@ export default function ProfileScreen() {
   ];
 
   const menuItems = [
-    { title: 'Edit Profile', icon: 'person-outline', color: '#0ea5e9', bgColor: '#e0f2fe' },
-    { title: 'My Recipes', icon: 'restaurant-outline', color: '#10b981', bgColor: '#ecfdf5' },
-    { title: 'Settings', icon: 'settings-outline', color: '#6b7280', bgColor: '#f1f5f9' },
-    { title: 'Notifications', icon: 'notifications-outline', color: '#f59e0b', bgColor: '#fef3c7' },
-    { title: 'Help & Support', icon: 'help-circle-outline', color: '#a855f7', bgColor: '#f3e8ff' },
-    { title: 'About', icon: 'information-circle-outline', color: '#06b6d4', bgColor: '#cffafe' },
+    { title: 'Edit Profile', icon: 'person-outline', color: '#0ea5e9', bgColor: '#e0f2fe', action: 'edit' },
+    { title: 'My Recipes', icon: 'restaurant-outline', color: '#10b981', bgColor: '#ecfdf5', action: 'recipes' },
+    { title: 'Settings', icon: 'settings-outline', color: '#6b7280', bgColor: '#f1f5f9', action: 'settings' },
+    { title: 'Notifications', icon: 'notifications-outline', color: '#f59e0b', bgColor: '#fef3c7', action: 'notifications' },
+    { title: 'Help & Support', icon: 'help-circle-outline', color: '#a855f7', bgColor: '#f3e8ff', action: 'help' },
+    { title: 'About', icon: 'information-circle-outline', color: '#06b6d4', bgColor: '#cffafe', action: 'about' },
   ];
 
   return (
@@ -43,7 +90,7 @@ export default function ProfileScreen() {
             <Text style={styles.userName}>John Doe</Text>
             <Text style={styles.userBio}>Recipe Enthusiast & Food Blogger</Text>
             
-            <TouchableOpacity style={styles.editButton}>
+            <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
               <Ionicons name="create-outline" size={16} color="#0ea5e9" />
               <Text style={styles.editButtonText}>Edit Profile</Text>
             </TouchableOpacity>
@@ -68,7 +115,7 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Account</Text>
           
           {menuItems.map((item, index) => (
-            <TouchableOpacity key={item.title} style={styles.menuItem}>
+            <TouchableOpacity key={item.title} style={styles.menuItem} onPress={() => handleMenuAction(item.action)}>
               <View style={[styles.menuIcon, { backgroundColor: item.bgColor }]}>
                 <Ionicons name={item.icon as any} size={20} color={item.color} />
               </View>
@@ -115,7 +162,7 @@ export default function ProfileScreen() {
 
         {/* Logout */}
         <View style={styles.logoutSection}>
-          <TouchableOpacity style={styles.logoutButton}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <LinearGradient
               colors={['#ef4444', '#dc2626']}
               start={{ x: 0, y: 0 }}

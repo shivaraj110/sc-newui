@@ -270,7 +270,7 @@ export default function ShoppingScreen() {
         )}
 
         {/* Shopping List */}
-        <View style={styles.listContainer}>
+        <View style={[styles.listContainer, styles.lastSection]}>
           {filteredItems.length === 0 ? (
             <View style={styles.emptyState}>
               <View style={styles.emptyIcon}>
@@ -873,5 +873,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: 'white',
+  },
+  lastSection: {
+    paddingBottom: 100,
   },
 });

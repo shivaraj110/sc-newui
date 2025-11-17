@@ -57,6 +57,19 @@ export default function SearchScreen() {
     router.push(`/recipes/${recipeId}`);
   };
 
+  const handleSortPress = () => {
+    // Show sort options
+    console.log('Show sort options');
+  };
+
+  const handleTrendingPress = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const handleFavoriteToggle = (recipeId: string, currentlyFavorite: boolean) => {
+    console.log(`Toggle favorite for recipe ${recipeId}, currently: ${currentlyFavorite}`);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -116,12 +129,12 @@ export default function SearchScreen() {
 
         {/* Results */}
         {searchQuery.length > 0 || selectedFilters.length > 0 ? (
-          <View style={styles.resultsSection}>
+          <View style={[styles.resultsSection, styles.lastSection]}>
             <View style={styles.resultsHeader}>
               <Text style={styles.resultsCount}>
                 {filteredRecipes.length} recipes found
               </Text>
-              <TouchableOpacity style={styles.sortButton}>
+              <TouchableOpacity style={styles.sortButton} onPress={handleSortPress}>
                 <Text style={styles.sortText}>Sort by</Text>
                 <Ionicons name="chevron-down" size={16} color="#0ea5e9" />
               </TouchableOpacity>
@@ -141,7 +154,10 @@ export default function SearchScreen() {
                 <View style={styles.recipeContent}>
                   <View style={styles.recipeHeader}>
                     <Text style={styles.recipeTitle} numberOfLines={1}>{recipe.title}</Text>
-                    <TouchableOpacity style={styles.favoriteButton}>
+                    <TouchableOpacity 
+                      style={styles.favoriteButton}
+                      onPress={() => handleFavoriteToggle(recipe.id, recipe.isFavorite)}
+                    >
                       <Ionicons
                         name={recipe.isFavorite ? "heart" : "heart-outline"}
                         size={20}
@@ -234,18 +250,18 @@ export default function SearchScreen() {
             </View>
 
             {/* Trending */}
-            <View style={styles.trendingSection}>
+            <View style={[styles.trendingSection, styles.lastSection]}>
               <Text style={styles.sectionTitle}>Trending Now</Text>
               <View style={styles.trendingGrid}>
-                <TouchableOpacity style={styles.trendingItem}>
+                <TouchableOpacity style={styles.trendingItem} onPress={() => handleTrendingPress('Summer Salads')}>
                   <Ionicons name="trending-up" size={16} color="#10b981" />
                   <Text style={styles.trendingText}>Summer Salads</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.trendingItem}>
+                <TouchableOpacity style={styles.trendingItem} onPress={() => handleTrendingPress('Quick Breakfast')}>
                   <Ionicons name="trending-up" size={16} color="#10b981" />
                   <Text style={styles.trendingText}>Quick Breakfast</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.trendingItem}>
+                <TouchableOpacity style={styles.trendingItem} onPress={() => handleTrendingPress('Healthy Snacks')}>
                   <Ionicons name="trending-up" size={16} color="#10b981" />
                   <Text style={styles.trendingText}>Healthy Snacks</Text>
                 </TouchableOpacity>
@@ -589,5 +605,8 @@ const styles = StyleSheet.create({
     color: '#1e293b',
     fontWeight: '600',
     marginLeft: 6,
+  },
+  lastSection: {
+    paddingBottom: 100,
   },
 });

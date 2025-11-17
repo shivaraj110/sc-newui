@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -12,6 +12,31 @@ export default function FavoritesScreen() {
 
   const handleRecipePress = (recipeId: string) => {
     router.push(`/recipes/${recipeId}`);
+  };
+
+  const handleFavoriteToggle = (recipeId: string, currentlyFavorite: boolean) => {
+    if (currentlyFavorite) {
+      Alert.alert(
+        'Remove from Favorites',
+        'Are you sure you want to remove this recipe from favorites?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Remove', 
+            style: 'destructive',
+            onPress: () => {
+              Alert.alert('Removed!', 'Recipe removed from favorites');
+            }
+          }
+        ]
+      );
+    } else {
+      Alert.alert('Added!', 'Recipe added to favorites');
+    }
+  };
+
+  const handleCollectionPress = (collection: string) => {
+    Alert.alert(`${collection} Collection`, `Opening ${collection.toLowerCase()} collection...`);
   };
 
   return (
@@ -45,7 +70,10 @@ export default function FavoritesScreen() {
                 <View style={styles.recipeContent}>
                   <View style={styles.recipeHeader}>
                     <Text style={styles.recipeTitle} numberOfLines={1}>{recipe.title}</Text>
-                    <TouchableOpacity style={styles.favoriteButton}>
+                    <TouchableOpacity 
+                      style={styles.favoriteButton}
+                      onPress={() => handleFavoriteToggle(recipe.id, recipe.isFavorite)}
+                    >
                       <Ionicons name="heart" size={20} color="#ec4899" />
                     </TouchableOpacity>
                   </View>
@@ -107,7 +135,7 @@ export default function FavoritesScreen() {
         <View style={[styles.collectionsSection, styles.lastSection]}>
           <Text style={styles.sectionTitle}>My Collections</Text>
           
-          <TouchableOpacity style={styles.collectionCard}>
+          <TouchableOpacity style={styles.collectionCard} onPress={() => handleCollectionPress('Quick Meals')}>
             <LinearGradient
               colors={['#f97316', '#ea580c']}
               start={{ x: 0, y: 0 }}
@@ -127,7 +155,7 @@ export default function FavoritesScreen() {
             </LinearGradient>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.collectionCard}>
+          <TouchableOpacity style={styles.collectionCard} onPress={() => handleCollectionPress('Healthy Options')}>
             <LinearGradient
               colors={['#10b981', '#059669']}
               start={{ x: 0, y: 0 }}
@@ -147,7 +175,7 @@ export default function FavoritesScreen() {
             </LinearGradient>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.collectionCard}>
+          <TouchableOpacity style={styles.collectionCard} onPress={() => handleCollectionPress('Weekend Specials')}>
             <LinearGradient
               colors={['#a855f7', '#9333ea']}
               start={{ x: 0, y: 0 }}

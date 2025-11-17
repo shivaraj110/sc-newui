@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -11,6 +11,65 @@ export default function MealPlanScreen() {
   const [selectedDate, setSelectedDate] = useState('2024-11-18');
 
   const mealsForDate = getMealsForDate(selectedDate);
+
+  const handleAddMeal = (mealType: string) => {
+    Alert.alert(
+      `Add ${mealType}`,
+      `Would you like to add a recipe to ${mealType.toLowerCase()}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Browse Recipes', 
+          onPress: () => router.push('/search')
+        },
+        { 
+          text: 'Create New', 
+          onPress: () => router.push('/add-recipe')
+        }
+      ]
+    );
+  };
+
+  const handleMealAction = (mealId: string, mealTitle: string) => {
+    Alert.alert(
+      mealTitle,
+      'What would you like to do?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'View Recipe', onPress: () => console.log(`View recipe for meal ${mealId}`) },
+        { text: 'Edit Meal', onPress: () => console.log(`Edit meal ${mealId}`) },
+        { text: 'Remove', style: 'destructive', onPress: () => console.log(`Remove meal ${mealId}`) }
+      ]
+    );
+  };
+
+  const handleGenerateShoppingList = () => {
+    Alert.alert(
+      'Generate Shopping List',
+      'This will create a shopping list based on your meal plan. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Generate', 
+          onPress: () => {
+            router.push('/shopping');
+          }
+        }
+      ]
+    );
+  };
+
+  const handleAddPlan = () => {
+    Alert.alert(
+      'Add to Meal Plan',
+      'What would you like to add?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Browse Recipes', onPress: () => router.push('/search') },
+        { text: 'Quick Add', onPress: () => handleAddMeal('Quick Meal') }
+      ]
+    );
+  };
 
   const dates = [
     { date: '2024-11-17', day: 'Sat', display: '17' },
@@ -64,7 +123,7 @@ export default function MealPlanScreen() {
               <Ionicons name="calendar" size={28} color="white" />
               <Text style={styles.headerTitle}>Meal Planning</Text>
             </View>
-            <TouchableOpacity style={styles.addButton}>
+            <TouchableOpacity onPress={handleAddPlan} style={styles.addButton}>
               <View style={styles.addButtonContainer}>
                 <Ionicons name="add" size={20} color="#0ea5e9" />
               </View>
@@ -145,14 +204,14 @@ export default function MealPlanScreen() {
                     </LinearGradient>
                     <Text style={styles.mealTypeTitle}>{mealType.name}</Text>
                   </View>
-                  <TouchableOpacity style={styles.addMealButton}>
+                  <TouchableOpacity style={styles.addMealButton} onPress={() => handleAddMeal(mealType.name)}>
                     <Ionicons name="add-circle-outline" size={20} color="#0ea5e9" />
                   </TouchableOpacity>
                 </View>
 
                 {meals.length > 0 ? (
                   meals.map((meal) => (
-                    <TouchableOpacity key={meal.id} style={styles.mealCard}>
+                    <TouchableOpacity key={meal.id} style={styles.mealCard} onPress={() => handleMealAction(meal.id, meal.recipeTitle)}>
                       <LinearGradient
                         colors={mealType.colors as [string, string]}
                         start={{ x: 0, y: 0 }}
@@ -167,13 +226,13 @@ export default function MealPlanScreen() {
                           {meal.servings} serving{meal.servings !== 1 ? 's' : ''} • {selectedDate}
                         </Text>
                       </View>
-                      <TouchableOpacity style={styles.mealActionButton}>
+                      <TouchableOpacity style={styles.mealActionButton} onPress={() => handleMealAction(meal.id, meal.recipeTitle)}>
                         <Ionicons name="ellipsis-horizontal" size={16} color="#64748b" />
                       </TouchableOpacity>
                     </TouchableOpacity>
                   ))
                 ) : (
-                  <TouchableOpacity style={styles.emptyMealCard}>
+                  <TouchableOpacity style={styles.emptyMealCard} onPress={() => handleAddMeal(mealType.name)}>
                     <View style={styles.emptyMealIcon}>
                       <Ionicons name={mealType.icon as any} size={24} color="#cbd5e1" />
                     </View>
@@ -187,7 +246,7 @@ export default function MealPlanScreen() {
         </View>
 
         {/* Weekly Summary */}
-        <View style={styles.summarySection}>
+        <View style={[styles.summarySection, styles.lastSection]}>
           <Text style={styles.sectionTitle}>This Week</Text>
           
           <View style={styles.summaryCard}>
@@ -227,7 +286,7 @@ export default function MealPlanScreen() {
             </LinearGradient>
           </View>
 
-          <TouchableOpacity style={styles.shoppingListButton}>
+          <TouchableOpacity style={styles.shoppingListButton} onPress={handleGenerateShoppingList}>
             <LinearGradient
               colors={['#f97316', '#ea580c']}
               start={{ x: 0, y: 0 }}
@@ -585,5 +644,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: 'white',
+  },
+  lastSection: {
+    paddingBottom: 100,
   },
 });
