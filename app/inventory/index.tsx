@@ -15,6 +15,17 @@ export default function InventoryScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+  const [showRecipeFilters, setShowRecipeFilters] = useState(false);
+  
+  // Recipe filters state
+  const [recipeFilters, setRecipeFilters] = useState({
+    cuisine: 'All',
+    difficulty: 'All',
+    cookTime: 'All',
+    dietaryRestrictions: 'All',
+    minMatchPercentage: 60,
+    availableOnly: true
+  });
   
   // Form state
   const [formData, setFormData] = useState({
@@ -258,11 +269,18 @@ export default function InventoryScreen() {
               <Ionicons name="storefront" size={28} color="white" />
               <Text style={styles.headerTitle}>My Inventory</Text>
             </View>
-            <TouchableOpacity onPress={openAddModal} style={styles.addButton}>
-              <View style={styles.addButtonContainer}>
-                <Ionicons name="add" size={20} color="#0ea5e9" />
-              </View>
-            </TouchableOpacity>
+            <View style={styles.headerActions}>
+              <TouchableOpacity onPress={() => setShowRecipeFilters(true)} style={styles.recipesFilterButton}>
+                <View style={styles.recipesFilterButtonContainer}>
+                  <Ionicons name="restaurant" size={18} color="#0ea5e9" />
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={openAddModal} style={styles.addButton}>
+                <View style={styles.addButtonContainer}>
+                  <Ionicons name="add" size={20} color="#0ea5e9" />
+                </View>
+              </TouchableOpacity>
+            </View>
           </View>
           <Text style={styles.headerSubtitle}>
             {inventory.length} items • Track expiration dates & quantities
@@ -726,6 +744,257 @@ export default function InventoryScreen() {
                   <Text style={styles.modalSaveText}>
                     {editingItem ? 'Update Item' : 'Add Item'}
                   </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Recipe Filters Modal */}
+      <Modal visible={showRecipeFilters} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <View style={styles.recipesModalTitleContainer}>
+                <LinearGradient
+                  colors={['#ec4899', '#db2777']}
+                  style={styles.recipesModalIcon}
+                >
+                  <Ionicons name="restaurant" size={20} color="white" />
+                </LinearGradient>
+                <Text style={styles.modalTitle}>Get Possible Recipes</Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowRecipeFilters(false)} style={styles.modalClose}>
+                <Ionicons name="close" size={24} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.modalBody}>
+              {/* Match Percentage */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Minimum Match Percentage: {recipeFilters.minMatchPercentage}%</Text>
+                <View style={styles.sliderContainer}>
+                  <TouchableOpacity 
+                    style={[styles.sliderButton, recipeFilters.minMatchPercentage === 50 && styles.sliderButtonActive]}
+                    onPress={() => setRecipeFilters(prev => ({ ...prev, minMatchPercentage: 50 }))}
+                  >
+                    <Text style={[styles.sliderButtonText, recipeFilters.minMatchPercentage === 50 && styles.sliderButtonTextActive]}>50%</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.sliderButton, recipeFilters.minMatchPercentage === 60 && styles.sliderButtonActive]}
+                    onPress={() => setRecipeFilters(prev => ({ ...prev, minMatchPercentage: 60 }))}
+                  >
+                    <Text style={[styles.sliderButtonText, recipeFilters.minMatchPercentage === 60 && styles.sliderButtonTextActive]}>60%</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.sliderButton, recipeFilters.minMatchPercentage === 80 && styles.sliderButtonActive]}
+                    onPress={() => setRecipeFilters(prev => ({ ...prev, minMatchPercentage: 80 }))}
+                  >
+                    <Text style={[styles.sliderButtonText, recipeFilters.minMatchPercentage === 80 && styles.sliderButtonTextActive]}>80%</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Cuisine Filter */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Cuisine Type</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryPicker}>
+                  {['All', 'Italian', 'Asian', 'Mexican', 'Mediterranean', 'American', 'Indian', 'French'].map((cuisine) => (
+                    <TouchableOpacity
+                      key={cuisine}
+                      onPress={() => setRecipeFilters(prev => ({ ...prev, cuisine }))}
+                      style={[
+                        styles.categoryPickerItem,
+                        recipeFilters.cuisine === cuisine && styles.categoryPickerItemActive
+                      ]}
+                    >
+                      <Text style={[
+                        styles.categoryPickerText,
+                        recipeFilters.cuisine === cuisine && styles.categoryPickerTextActive
+                      ]}>
+                        {cuisine}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
+              {/* Difficulty Filter */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Difficulty Level</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryPicker}>
+                  {['All', 'Easy', 'Medium', 'Hard'].map((difficulty) => (
+                    <TouchableOpacity
+                      key={difficulty}
+                      onPress={() => setRecipeFilters(prev => ({ ...prev, difficulty }))}
+                      style={[
+                        styles.categoryPickerItem,
+                        recipeFilters.difficulty === difficulty && styles.categoryPickerItemActive
+                      ]}
+                    >
+                      <Ionicons 
+                        name={difficulty === 'Easy' ? 'star' : difficulty === 'Medium' ? 'star-half' : difficulty === 'Hard' ? 'flash' : 'ellipse'} 
+                        size={16} 
+                        color={recipeFilters.difficulty === difficulty ? 'white' : '#64748b'} 
+                      />
+                      <Text style={[
+                        styles.categoryPickerText,
+                        recipeFilters.difficulty === difficulty && styles.categoryPickerTextActive
+                      ]}>
+                        {difficulty}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
+              {/* Cook Time Filter */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Maximum Cook Time</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryPicker}>
+                  {['All', '15 min', '30 min', '45 min', '60 min'].map((cookTime) => (
+                    <TouchableOpacity
+                      key={cookTime}
+                      onPress={() => setRecipeFilters(prev => ({ ...prev, cookTime }))}
+                      style={[
+                        styles.categoryPickerItem,
+                        recipeFilters.cookTime === cookTime && styles.categoryPickerItemActive
+                      ]}
+                    >
+                      <Ionicons 
+                        name="time-outline" 
+                        size={16} 
+                        color={recipeFilters.cookTime === cookTime ? 'white' : '#64748b'} 
+                      />
+                      <Text style={[
+                        styles.categoryPickerText,
+                        recipeFilters.cookTime === cookTime && styles.categoryPickerTextActive
+                      ]}>
+                        {cookTime}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
+              {/* Dietary Restrictions */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Dietary Preferences</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryPicker}>
+                  {['All', 'Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Keto', 'Low-Carb'].map((diet) => (
+                    <TouchableOpacity
+                      key={diet}
+                      onPress={() => setRecipeFilters(prev => ({ ...prev, dietaryRestrictions: diet }))}
+                      style={[
+                        styles.categoryPickerItem,
+                        recipeFilters.dietaryRestrictions === diet && styles.categoryPickerItemActive
+                      ]}
+                    >
+                      <Ionicons 
+                        name="leaf-outline" 
+                        size={16} 
+                        color={recipeFilters.dietaryRestrictions === diet ? 'white' : '#64748b'} 
+                      />
+                      <Text style={[
+                        styles.categoryPickerText,
+                        recipeFilters.dietaryRestrictions === diet && styles.categoryPickerTextActive
+                      ]}>
+                        {diet}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
+              {/* Available Only Toggle */}
+              <View style={styles.inputGroup}>
+                <View style={styles.toggleContainer}>
+                  <View style={styles.toggleLabelContainer}>
+                    <Ionicons name="checkmark-circle" size={20} color="#10b981" />
+                    <Text style={styles.inputLabel}>Only recipes I can fully make</Text>
+                  </View>
+                  <TouchableOpacity 
+                    onPress={() => setRecipeFilters(prev => ({ ...prev, availableOnly: !prev.availableOnly }))}
+                    style={[styles.toggleButton, recipeFilters.availableOnly && styles.toggleButtonActive]}
+                  >
+                    <View style={[styles.toggleSlider, recipeFilters.availableOnly && styles.toggleSliderActive]} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Filter Summary */}
+              <View style={styles.filterSummary}>
+                <View style={styles.filterSummaryHeader}>
+                  <Ionicons name="funnel" size={18} color="#0ea5e9" />
+                  <Text style={styles.filterSummaryTitle}>Active Filters</Text>
+                </View>
+                <View style={styles.filterTags}>
+                  {recipeFilters.minMatchPercentage !== 60 && (
+                    <View style={styles.filterTag}>
+                      <Text style={styles.filterTagText}>{recipeFilters.minMatchPercentage}% match</Text>
+                    </View>
+                  )}
+                  {recipeFilters.cuisine !== 'All' && (
+                    <View style={styles.filterTag}>
+                      <Text style={styles.filterTagText}>{recipeFilters.cuisine}</Text>
+                    </View>
+                  )}
+                  {recipeFilters.difficulty !== 'All' && (
+                    <View style={styles.filterTag}>
+                      <Text style={styles.filterTagText}>{recipeFilters.difficulty}</Text>
+                    </View>
+                  )}
+                  {recipeFilters.cookTime !== 'All' && (
+                    <View style={styles.filterTag}>
+                      <Text style={styles.filterTagText}>≤ {recipeFilters.cookTime}</Text>
+                    </View>
+                  )}
+                  {recipeFilters.dietaryRestrictions !== 'All' && (
+                    <View style={styles.filterTag}>
+                      <Text style={styles.filterTagText}>{recipeFilters.dietaryRestrictions}</Text>
+                    </View>
+                  )}
+                  {recipeFilters.availableOnly && (
+                    <View style={styles.filterTag}>
+                      <Text style={styles.filterTagText}>Available ingredients</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            </ScrollView>
+            
+            <View style={styles.modalActions}>
+              <TouchableOpacity 
+                style={styles.modalCancelButton} 
+                onPress={() => {
+                  setRecipeFilters({
+                    cuisine: 'All',
+                    difficulty: 'All',
+                    cookTime: 'All',
+                    dietaryRestrictions: 'All',
+                    minMatchPercentage: 60,
+                    availableOnly: true
+                  });
+                }}
+              >
+                <Text style={styles.modalCancelText}>Reset</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.modalSaveButton} 
+                onPress={() => {
+                  setShowRecipeFilters(false);
+                  router.push('/(tabs)');
+                }}
+              >
+                <LinearGradient
+                  colors={['#ec4899', '#db2777']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.modalSaveGradient}
+                >
+                  <Ionicons name="search" size={16} color="white" />
+                  <Text style={styles.modalSaveText}>Find Recipes</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>
@@ -1375,5 +1644,133 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: 'white',
     textAlign: 'center',
+  },
+
+  // New styles for recipe filters
+  headerActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  recipesFilterButton: {
+    padding: 4,
+  },
+  recipesFilterButtonContainer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  recipesModalTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  recipesModalIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sliderContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
+  sliderButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#f1f5f9',
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
+    alignItems: 'center',
+  },
+  sliderButtonActive: {
+    backgroundColor: '#0ea5e9',
+    borderColor: '#0ea5e9',
+  },
+  sliderButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  sliderButtonTextActive: {
+    color: 'white',
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  toggleLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  toggleButton: {
+    width: 50,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#e2e8f0',
+    padding: 2,
+    justifyContent: 'center',
+  },
+  toggleButtonActive: {
+    backgroundColor: '#10b981',
+  },
+  toggleSlider: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  toggleSliderActive: {
+    transform: [{ translateX: 20 }],
+  },
+  filterSummary: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  filterSummaryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  filterSummaryTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1e293b',
+  },
+  filterTags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  filterTag: {
+    backgroundColor: '#0ea5e9',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  filterTagText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'white',
   },
 });
