@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { mockInventory, inventoryCategories, InventoryItem } from '../data/inventory';
+import { mockRecipes, Recipe } from '../data/recipes';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Alert } from '../components/AlertProvider';
 
@@ -24,6 +25,61 @@ export default function InventoryScreen() {
     expirationDate: '',
     notes: ''
   });
+
+  // Recipe search functionality
+  const findRecipesWithAvailableIngredients = (): Array<{recipe: Recipe, matchedIngredients: number, totalIngredients: number, matchPercentage: number}> => {
+    const inventoryNames = inventory.map(item => item.name.toLowerCase().trim());
+    
+    return mockRecipes.map(recipe => {
+      let matchedIngredients = 0;
+      const totalIngredients = recipe.ingredients.length;
+      
+      recipe.ingredients.forEach(ingredient => {
+        const ingredientName = ingredient.name.toLowerCase().trim();
+        
+        // Enhanced matching logic
+        const hasExactMatch = inventoryNames.some(invItem => invItem === ingredientName);
+        const hasPartialMatch = inventoryNames.some(invItem => {
+          const ingredientWords = ingredientName.split(' ');
+          const inventoryWords = invItem.split(' ');
+          
+          // Check if any key words match (skip common words like 'fresh', 'dried', etc.)
+          const keyWords = ingredientWords.filter(word => 
+            !['fresh', 'dried', 'ground', 'whole', 'chopped', 'sliced', 'diced', 'cooked'].includes(word)
+          );
+          const invKeyWords = inventoryWords.filter(word => 
+            !['fresh', 'dried', 'ground', 'whole', 'chopped', 'sliced', 'diced', 'cooked'].includes(word)
+          );
+          
+          return keyWords.some(word => invKeyWords.includes(word)) ||
+                 invKeyWords.some(word => keyWords.includes(word));
+        });
+        
+        if (hasExactMatch || hasPartialMatch) {
+          matchedIngredients++;
+        }
+      });
+      
+      const matchPercentage = Math.round((matchedIngredients / totalIngredients) * 100);
+      
+      return {
+        recipe,
+        matchedIngredients,
+        totalIngredients,
+        matchPercentage
+      };
+    }).filter(result => result.matchedIngredients > 0)
+      .sort((a, b) => {
+        // Sort by match percentage first, then by total matched ingredients
+        if (b.matchPercentage === a.matchPercentage) {
+          return b.matchedIngredients - a.matchedIngredients;
+        }
+        return b.matchPercentage - a.matchPercentage;
+      })
+      .slice(0, 6); // Show top 6 recipes
+  };
+
+  const availableRecipes = findRecipesWithAvailableIngredients();
 
   const resetForm = () => {
     setFormData({
@@ -323,6 +379,101 @@ export default function InventoryScreen() {
             })}
           </ScrollView>
         </View>
+
+        {/* Recipe Suggestions */}
+        {availableRecipes.length > 0 && (
+          <View style={styles.recipesSection}>
+            <View style={styles.recipesSectionHeader}>
+              <View style={styles.recipesTitleContainer}>
+                <LinearGradient
+                  colors={['#ec4899', '#db2777']}
+                  style={styles.recipesIcon}
+                >
+                  <Ionicons name="restaurant" size={18} color="white" />
+                </LinearGradient>
+                <Text style={styles.recipesTitle}>Recipe Suggestions</Text>
+                <View style={[styles.recipesBadge]}>
+                  <Text style={styles.recipesBadgeText}>{availableRecipes.length}</Text>
+                </View>
+              </View>
+              <Text style={styles.recipesSubtitle}>
+                Recipes you can make with your current ingredients
+              </Text>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.recipesScroll}>
+              {availableRecipes.map((result) => (
+                <TouchableOpacity
+                  key={result.recipe.id}
+                  style={styles.recipeCard}
+                  onPress={() => router.push(`/recipes/${result.recipe.id}` as any)}
+                >
+                  <View style={styles.recipeCardContent}>
+                    <View style={styles.recipeCardHeader}>
+                      <View style={styles.recipeCardImagePlaceholder}>
+                        <Ionicons name="restaurant-outline" size={24} color="#0ea5e9" />
+                      </View>
+                      <View style={styles.recipeMatchBadge}>
+                        <LinearGradient
+                          colors={result.matchPercentage >= 80 ? ['#10b981', '#059669'] : 
+                                 result.matchPercentage >= 60 ? ['#f59e0b', '#d97706'] : 
+                                 ['#ef4444', '#dc2626']}
+                          style={styles.recipeMatchGradient}
+                        >
+                          <Text style={styles.recipeMatchText}>{result.matchPercentage}%</Text>
+                        </LinearGradient>
+                      </View>
+                    </View>
+                    <Text style={styles.recipeCardTitle} numberOfLines={2}>
+                      {result.recipe.title}
+                    </Text>
+                    <Text style={styles.recipeCardDescription} numberOfLines={2}>
+                      {result.recipe.description}
+                    </Text>
+                    <View style={styles.recipeCardStats}>
+                      <View style={styles.recipeCardStat}>
+                        <Ionicons name="checkmark-circle" size={14} color="#10b981" />
+                        <Text style={styles.recipeCardStatText}>
+                          {result.matchedIngredients}/{result.totalIngredients} ingredients
+                        </Text>
+                      </View>
+                      <View style={styles.recipeCardStat}>
+                        <Ionicons name="time-outline" size={14} color="#64748b" />
+                        <Text style={styles.recipeCardStatText}>{result.recipe.cookTime}m</Text>
+                      </View>
+                    </View>
+                    <View style={styles.recipeCardFooter}>
+                      <View style={styles.recipeCardTags}>
+                        {result.recipe.tags.slice(0, 2).map((tag, tagIndex) => (
+                          <View key={tagIndex} style={styles.recipeCardTag}>
+                            <Text style={styles.recipeCardTagText}>{tag}</Text>
+                          </View>
+                        ))}
+                      </View>
+                      <View style={styles.recipeCardAction}>
+                        <Ionicons name="arrow-forward" size={16} color="#0ea5e9" />
+                      </View>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+              {availableRecipes.length > 0 && (
+                <TouchableOpacity
+                  style={styles.viewAllRecipesCard}
+                  onPress={() => router.push('/(tabs)')}
+                >
+                  <LinearGradient
+                    colors={['#0ea5e9', '#0284c7']}
+                    style={styles.viewAllRecipesGradient}
+                  >
+                    <Ionicons name="search" size={24} color="white" />
+                    <Text style={styles.viewAllRecipesText}>View All Recipes</Text>
+                    <Ionicons name="arrow-forward" size={20} color="white" />
+                  </LinearGradient>
+                </TouchableOpacity>
+              )}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Inventory List */}
         <View style={[styles.listContainer, styles.lastSection]}>
@@ -1058,5 +1209,171 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: 'white',
+  },
+  
+  // Recipe suggestions styles
+  recipesSection: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  recipesSectionHeader: {
+    marginBottom: 16,
+  },
+  recipesTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  recipesIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  recipesTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#1e293b',
+    flex: 1,
+  },
+  recipesBadge: {
+    backgroundColor: '#e0f2fe',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  recipesBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0ea5e9',
+  },
+  recipesSubtitle: {
+    fontSize: 14,
+    color: '#64748b',
+    lineHeight: 18,
+  },
+  recipesScroll: {
+    marginTop: 4,
+  },
+  recipeCard: {
+    width: 260,
+    marginRight: 16,
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  recipeCardContent: {
+    flex: 1,
+  },
+  recipeCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  recipeCardImagePlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#e0f2fe',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recipeMatchBadge: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  recipeMatchGradient: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  recipeMatchText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: 'white',
+  },
+  recipeCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: 6,
+    lineHeight: 20,
+  },
+  recipeCardDescription: {
+    fontSize: 13,
+    color: '#64748b',
+    marginBottom: 12,
+    lineHeight: 16,
+  },
+  recipeCardStats: {
+    flexDirection: 'column',
+    gap: 6,
+    marginBottom: 12,
+  },
+  recipeCardStat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  recipeCardStatText: {
+    fontSize: 12,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  recipeCardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 'auto',
+  },
+  recipeCardTags: {
+    flexDirection: 'row',
+    gap: 4,
+    flex: 1,
+  },
+  recipeCardTag: {
+    backgroundColor: '#f1f5f9',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  recipeCardTagText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  recipeCardAction: {
+    padding: 4,
+  },
+  viewAllRecipesCard: {
+    width: 160,
+    height: 120,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#0ea5e9',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  viewAllRecipesGradient: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  viewAllRecipesText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: 'white',
+    textAlign: 'center',
   },
 });

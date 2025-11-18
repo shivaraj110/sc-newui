@@ -5,12 +5,33 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Alert } from '../components/AlertProvider';
+import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 
 export default function ScanScreen() {
   const router = useRouter();
   const [isScanning, setIsScanning] = useState(false);
   const [scannedItems, setScannedItems] = useState<string[]>([]);
+  const [permission, requestPermission] = useCameraPermissions();
+  const [facing] = useState<CameraType>('back');
+  const [currentTipIndex, setCurrentTipIndex] = useState(0);
   const scanAnimation = new Animated.Value(0);
+
+  // Rotate tips every 4 seconds
+  const tips = [
+    { icon: 'barcode-outline', text: 'Scan barcodes', color: '#0ea5e9' },
+    { icon: 'text-outline', text: 'Read labels', color: '#10b981' },
+    { icon: 'leaf-outline', text: 'Fresh produce', color: '#f59e0b' },
+    { icon: 'camera-outline', text: 'Clear photos', color: '#8b5cf6' },
+    { icon: 'sunny-outline', text: 'Good lighting', color: '#f97316' },
+    { icon: 'resize-outline', text: 'Fill frame', color: '#ec4899' }
+  ];
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTipIndex(prev => (prev + 1) % tips.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
   const startScanAnimation = () => {
     Animated.loop(
@@ -30,31 +51,141 @@ export default function ScanScreen() {
   };
 
   const handleScan = () => {
+    if (!permission?.granted) {
+      requestPermission();
+      return;
+    }
+
     setIsScanning(true);
     startScanAnimation();
 
-    // Mock scanning process
+    // Dynamic scanning duration (1.5 to 4 seconds)
+    const scanDuration = Math.random() * 2500 + 1500;
+
+    // Mock scanning process - simulate ingredient detection
     setTimeout(() => {
-      const mockItems = ['Chicken breast', 'Garlic', 'Olive oil', 'Onions'];
-      setScannedItems(mockItems);
+      // 15% chance of scanning failure for realism
+      if (Math.random() < 0.15) {
+        setIsScanning(false);
+        Alert.alert(
+          'Scan Unsuccessful 📷',
+          'Could not detect clear ingredients. Try adjusting lighting or moving closer to the labels.',
+          [
+            { text: 'Try Again', onPress: handleScan },
+            { text: 'Manual Entry', onPress: () => router.push('/inventory') },
+          ],
+          { type: 'warning' }
+        );
+        return;
+      }
+
+      // Extended mock ingredient combinations
+      const mockDetectionScenarios = [
+        {
+          type: 'Barcode Scan',
+          items: ['Organic chicken breast', 'Free-range eggs', 'Whole wheat flour'],
+          confidence: [98, 95, 92]
+        },
+        {
+          type: 'Label Reading',
+          items: ['Fresh basil', 'Cherry tomatoes', 'Mozzarella cheese', 'Extra virgin olive oil'],
+          confidence: [89, 94, 91, 87]
+        },
+        {
+          type: 'Mixed Detection',
+          items: ['Ground beef (80/20)', 'Yellow onions', 'Red bell peppers', 'Fresh garlic cloves'],
+          confidence: [96, 88, 90, 85]
+        },
+        {
+          type: 'Produce Recognition',
+          items: ['Atlantic salmon fillet', 'Fresh asparagus spears', 'Organic lemons', 'Fresh dill'],
+          confidence: [93, 87, 91, 82]
+        },
+        {
+          type: 'Pantry Items',
+          items: ['Baby carrots', 'Celery stalks', 'Yukon gold potatoes', 'Dried bay leaves'],
+          confidence: [90, 86, 94, 78]
+        },
+        {
+          type: 'Dairy Section',
+          items: ['Whole milk (1 gallon)', 'Sharp cheddar cheese', 'Greek yogurt', 'Unsalted butter'],
+          confidence: [97, 93, 89, 91]
+        },
+        {
+          type: 'Asian Cuisine',
+          items: ['Soy sauce', 'Sesame oil', 'Fresh ginger root', 'Green onions', 'Rice vinegar'],
+          confidence: [95, 88, 84, 87, 90]
+        },
+        {
+          type: 'Baking Essentials',
+          items: ['All-purpose flour', 'Brown sugar', 'Vanilla extract', 'Baking powder'],
+          confidence: [96, 92, 89, 91]
+        },
+        {
+          type: 'Mediterranean',
+          items: ['Kalamata olives', 'Feta cheese', 'Sun-dried tomatoes', 'Fresh oregano'],
+          confidence: [91, 88, 86, 83]
+        },
+        {
+          type: 'Breakfast Items',
+          items: ['Steel-cut oats', 'Pure maple syrup', 'Fresh blueberries', 'Almond milk'],
+          confidence: [94, 90, 85, 88]
+        },
+        {
+          type: 'Mexican Cuisine',
+          items: ['Corn tortillas', 'Black beans', 'Jalapeño peppers', 'Lime', 'Cilantro'],
+          confidence: [93, 91, 87, 89, 84]
+        },
+        {
+          type: 'Frozen Section',
+          items: ['Frozen peas', 'Vanilla ice cream', 'Frozen berries mix'],
+          confidence: [96, 92, 88]
+        },
+        {
+          type: 'Spice Detection',
+          items: ['Cumin powder', 'Paprika', 'Black peppercorns', 'Sea salt'],
+          confidence: [86, 84, 89, 95]
+        },
+        {
+          type: 'Fresh Herbs',
+          items: ['Fresh rosemary', 'Italian parsley', 'Fresh thyme', 'Mint leaves'],
+          confidence: [83, 85, 81, 79]
+        },
+        {
+          type: 'Protein Pack',
+          items: ['Boneless pork chops', 'Wild-caught shrimp', 'Organic tofu'],
+          confidence: [94, 89, 87]
+        }
+      ];
+      
+      const randomScenario = mockDetectionScenarios[Math.floor(Math.random() * mockDetectionScenarios.length)];
+      setScannedItems(randomScenario.items);
       setIsScanning(false);
       
+      // Calculate average confidence
+      const avgConfidence = Math.round(
+        randomScenario.confidence.reduce((sum, conf) => sum + conf, 0) / randomScenario.confidence.length
+      );
+
       Alert.alert(
-        'Ingredients Found! 🎉',
-        `Found: ${mockItems.join(', ')}\n\nWould you like to add these to your inventory?`,
+        `${randomScenario.type} Success! 🎉`,
+        `Detected ${randomScenario.items.length} items (${avgConfidence}% confidence):\n\n${randomScenario.items.map((item, index) => 
+          `• ${item} (${randomScenario.confidence[index]}%)`
+        ).join('\n')}\n\nWould you like to add these to your inventory?`,
         [
+          { text: 'Rescan', onPress: handleScan },
           { text: 'Cancel', style: 'cancel' },
           { 
             text: 'Add to Inventory', 
             onPress: () => {
-              Alert.success('Success!', 'Ingredients added to inventory');
+              Alert.success('Success!', `Added ${randomScenario.items.length} ingredients to inventory`);
               router.push('/inventory');
             }
           }
         ],
         { type: 'success' }
       );
-    }, 3000);
+    }, scanDuration);
   };
 
   const translateY = scanAnimation.interpolate({
@@ -88,74 +219,95 @@ export default function ScanScreen() {
 
       {/* Camera View */}
       <View style={styles.cameraContainer}>
-        <View style={styles.cameraView}>
-          {/* Corner overlays */}
-          <View style={[styles.corner, styles.topLeft]} />
-          <View style={[styles.corner, styles.topRight]} />
-          <View style={[styles.corner, styles.bottomLeft]} />
-          <View style={[styles.corner, styles.bottomRight]} />
-          
-          {/* Scanning line animation */}
-          {isScanning && (
-            <Animated.View
-              style={[
-                styles.scanningLine,
-                { transform: [{ translateY }] }
-              ]}
-            />
-          )}
-
-          {/* Center guide */}
-          <View style={styles.centerGuide}>
-            <View style={styles.guideFrame}>
-              <Ionicons name="scan-outline" size={48} color="rgba(255,255,255,0.8)" />
-              <Text style={styles.guideText}>
-                {isScanning ? 'Scanning...' : 'Position ingredients here'}
-              </Text>
+        {permission === null ? (
+          <View style={styles.cameraView}>
+            <View style={styles.centerGuide}>
+              <View style={styles.guideFrame}>
+                <Ionicons name="camera-outline" size={48} color="rgba(255,255,255,0.8)" />
+                <Text style={styles.guideText}>Requesting camera permission...</Text>
+              </View>
             </View>
           </View>
-
-          {/* Status overlay */}
-          {isScanning && (
-            <View style={styles.scanningOverlay}>
-              <LinearGradient
-                colors={['transparent', 'rgba(14, 165, 233, 0.2)', 'transparent']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={styles.scanningGradient}
-              >
-                <View style={styles.scanningIndicator}>
-                  <Ionicons name="flash" size={20} color="white" />
-                  <Text style={styles.scanningText}>Analyzing...</Text>
-                </View>
-              </LinearGradient>
+        ) : !permission.granted ? (
+          <View style={styles.cameraView}>
+            <View style={styles.centerGuide}>
+              <View style={styles.guideFrame}>
+                <Ionicons name="camera-outline" size={48} color="rgba(255,255,255,0.8)" />
+                <Text style={styles.guideText}>Camera access required</Text>
+                <TouchableOpacity
+                  style={styles.scanButton}
+                  onPress={requestPermission}
+                >
+                  <Text style={styles.scanButtonText}>Grant Permission</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          )}
-        </View>
+          </View>
+        ) : (
+          <CameraView style={styles.cameraView} facing={facing}>
+            {/* Corner overlays */}
+            <View style={[styles.corner, styles.topLeft]} />
+            <View style={[styles.corner, styles.topRight]} />
+            <View style={[styles.corner, styles.bottomLeft]} />
+            <View style={[styles.corner, styles.bottomRight]} />
+            
+            {/* Scanning line animation */}
+            {isScanning && (
+              <Animated.View
+                style={[
+                  styles.scanningLine,
+                  { transform: [{ translateY }] }
+                ]}
+              />
+            )}
+
+            {/* Center guide */}
+            <View style={styles.centerGuide}>
+              <View style={styles.guideFrame}>
+                <Ionicons name="scan-outline" size={48} color="rgba(255,255,255,0.8)" />
+                <Text style={styles.guideText}>
+                  {isScanning ? 'Scanning...' : 'Position ingredients here'}
+                </Text>
+              </View>
+            </View>
+
+            {/* Status overlay */}
+            {isScanning && (
+              <View style={styles.scanningOverlay}>
+                <LinearGradient
+                  colors={['transparent', 'rgba(14, 165, 233, 0.2)', 'transparent']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0, y: 1 }}
+                  style={styles.scanningGradient}
+                >
+                  <View style={styles.scanningIndicator}>
+                    <Ionicons name="flash" size={20} color="white" />
+                    <Text style={styles.scanningText}>
+                      {Math.random() > 0.7 ? 'Processing labels...' : 
+                       Math.random() > 0.4 ? 'Detecting barcodes...' : 'Analyzing image...'}
+                    </Text>
+                  </View>
+                </LinearGradient>
+              </View>
+            )}
+          </CameraView>
+        )}
       </View>
 
       {/* Bottom Controls */}
       <View style={styles.controls}>
         {/* Quick Tips */}
         <View style={styles.tipsContainer}>
-          <View style={styles.tipItem}>
-            <View style={styles.tipIcon}>
-              <Ionicons name="barcode-outline" size={16} color="#0ea5e9" />
+          {tips.slice(currentTipIndex, currentTipIndex + 3).concat(
+            currentTipIndex > tips.length - 3 ? tips.slice(0, (currentTipIndex + 3) - tips.length) : []
+          ).map((tip, index) => (
+            <View key={`${currentTipIndex}-${index}`} style={styles.tipItem}>
+              <View style={[styles.tipIcon, { backgroundColor: 'white' }]}>
+                <Ionicons name={tip.icon as any} size={16} color={tip.color} />
+              </View>
+              <Text style={styles.tipText}>{tip.text}</Text>
             </View>
-            <Text style={styles.tipText}>Scan barcodes</Text>
-          </View>
-          <View style={styles.tipItem}>
-            <View style={styles.tipIcon}>
-              <Ionicons name="text-outline" size={16} color="#10b981" />
-            </View>
-            <Text style={styles.tipText}>Read labels</Text>
-          </View>
-          <View style={styles.tipItem}>
-            <View style={styles.tipIcon}>
-              <Ionicons name="leaf-outline" size={16} color="#f59e0b" />
-            </View>
-            <Text style={styles.tipText}>Fresh produce</Text>
-          </View>
+          ))}
         </View>
 
         {/* Scan Button */}
@@ -183,7 +335,7 @@ export default function ScanScreen() {
 
         {/* Alternative Actions */}
         <View style={styles.alternativeActions}>
-          <TouchableOpacity style={styles.altAction} onPress={() => router.push('/shopping?autoAdd=true')}>
+          <TouchableOpacity style={styles.altAction} onPress={() => router.push('/inventory')}>
             <View style={styles.altActionIcon}>
               <Ionicons name="add-circle-outline" size={20} color="#0ea5e9" />
             </View>
@@ -201,14 +353,35 @@ export default function ScanScreen() {
         {/* Recent Scans */}
         {scannedItems.length > 0 && (
           <View style={styles.recentScans}>
-            <Text style={styles.recentTitle}>Recently Scanned</Text>
+            <View style={styles.recentHeader}>
+              <Text style={styles.recentTitle}>Recently Scanned</Text>
+              <Text style={styles.recentSubtitle}>
+                {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+              </Text>
+            </View>
             <View style={styles.recentItems}>
               {scannedItems.slice(0, 3).map((item, index) => (
                 <View key={index} style={styles.recentItem}>
-                  <Ionicons name="checkmark-circle" size={16} color="#10b981" />
+                  <View style={styles.recentItemIcon}>
+                    <Ionicons 
+                      name={index === 0 ? "checkmark-circle" : index === 1 ? "star" : "bookmark"} 
+                      size={16} 
+                      color={index === 0 ? "#10b981" : index === 1 ? "#f59e0b" : "#8b5cf6"} 
+                    />
+                  </View>
                   <Text style={styles.recentItemText}>{item}</Text>
+                  {Math.random() > 0.6 && (
+                    <Text style={styles.recentItemBadge}>
+                      {Math.random() > 0.5 ? 'Organic' : 'Fresh'}
+                    </Text>
+                  )}
                 </View>
               ))}
+              {scannedItems.length > 3 && (
+                <Text style={styles.moreItemsText}>
+                  +{scannedItems.length - 3} more items detected
+                </Text>
+              )}
             </View>
           </View>
         )}
@@ -459,11 +632,21 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  recentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   recentTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: '#1e293b',
-    marginBottom: 12,
+  },
+  recentSubtitle: {
+    fontSize: 12,
+    color: '#64748b',
+    fontWeight: '500',
   },
   recentItems: {
     gap: 8,
@@ -472,9 +655,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  recentItemIcon: {
+    marginRight: 8,
+  },
   recentItemText: {
     fontSize: 14,
     color: '#64748b',
-    marginLeft: 8,
+    flex: 1,
+  },
+  recentItemBadge: {
+    fontSize: 10,
+    color: '#10b981',
+    fontWeight: '600',
+    backgroundColor: '#dcfce7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  moreItemsText: {
+    fontSize: 12,
+    color: '#94a3b8',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 4,
   },
 });
