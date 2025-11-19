@@ -1375,6 +1375,7 @@ const styles = StyleSheet.create({
     maxHeight: 400,
     paddingHorizontal: 24,
     paddingVertical: 20,
+    paddingBottom: 40,
   },
   inputGroup: {
     marginBottom: 20,
