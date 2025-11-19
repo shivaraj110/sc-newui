@@ -173,7 +173,6 @@ export default function ScanScreen() {
           `• ${item} (${randomScenario.confidence[index]}%)`
         ).join('\n')}\n\nWould you like to add these to your inventory?`,
         [
-          { text: 'Rescan', onPress: handleScan },
           { text: 'Cancel', style: 'cancel' },
           { 
             text: 'Add to Inventory', 
