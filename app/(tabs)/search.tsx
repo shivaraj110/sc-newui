@@ -202,87 +202,89 @@ export default function SearchScreen() {
         </View>
 
         {/* Results */}
-        {searchQuery.length > 0 || selectedFilters.length > 0 ? (
-          <View style={[styles.resultsSection, styles.lastSection]}>
-            <View style={styles.resultsHeader}>
-              <Text style={styles.resultsCount}>
-                {sortedRecipes.length} recipes found
+        <View style={[styles.resultsSection, styles.lastSection]}>
+          <View style={styles.resultsHeader}>
+            <Text style={styles.resultsCount}>
+              {searchQuery.length > 0 || selectedFilters.length > 0 
+                ? `${sortedRecipes.length} recipes found`
+                : `All Recipes (${sortedRecipes.length})`}
+            </Text>
+            <TouchableOpacity style={styles.sortButton} onPress={handleSortPress}>
+              <Text style={styles.sortText}>
+                {sortOptions.find(opt => opt.id === sortOption)?.label || 'Sort by'}
               </Text>
-              <TouchableOpacity style={styles.sortButton} onPress={handleSortPress}>
-                <Text style={styles.sortText}>
-                  {sortOptions.find(opt => opt.id === sortOption)?.label || 'Sort by'}
-                </Text>
-                <Ionicons 
-                  name={showSortModal ? "chevron-up" : "chevron-down"} 
-                  size={16} 
-                  color="#0ea5e9" 
-                />
-              </TouchableOpacity>
-            </View>
+              <Ionicons 
+                name={showSortModal ? "chevron-up" : "chevron-down"} 
+                size={16} 
+                color="#0ea5e9" 
+              />
+            </TouchableOpacity>
+          </View>
 
-            {sortedRecipes.map((recipe) => (
-              <TouchableOpacity
-                key={recipe.id}
-                onPress={() => handleRecipePress(recipe.id)}
-                style={styles.recipeCard}
-              >
-                <Image
-                  source={{ uri: recipe.image }}
-                  style={styles.recipeImage}
-                  resizeMode="cover"
-                />
-                <View style={styles.recipeContent}>
-                  <View style={styles.recipeHeader}>
-                    <Text style={styles.recipeTitle} numberOfLines={1}>{recipe.title}</Text>
-                    <TouchableOpacity 
-                      style={styles.favoriteButton}
-                      onPress={() => handleFavoriteToggle(recipe.id, recipe.isFavorite)}
-                    >
-                      <Ionicons
-                        name={recipe.isFavorite ? "heart" : "heart-outline"}
-                        size={20}
-                        color={recipe.isFavorite ? "#ef4444" : "#64748b"}
-                      />
-                    </TouchableOpacity>
+          {sortedRecipes.map((recipe) => (
+            <TouchableOpacity
+              key={recipe.id}
+              onPress={() => handleRecipePress(recipe.id)}
+              style={styles.recipeCard}
+            >
+              <Image
+                source={{ uri: recipe.image }}
+                style={styles.recipeImage}
+                resizeMode="cover"
+              />
+              <View style={styles.recipeContent}>
+                <View style={styles.recipeHeader}>
+                  <Text style={styles.recipeTitle} numberOfLines={1}>{recipe.title}</Text>
+                  <TouchableOpacity 
+                    style={styles.favoriteButton}
+                    onPress={() => handleFavoriteToggle(recipe.id, recipe.isFavorite)}
+                  >
+                    <Ionicons
+                      name={recipe.isFavorite ? "heart" : "heart-outline"}
+                      size={20}
+                      color={recipe.isFavorite ? "#ef4444" : "#64748b"}
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                {recipe.rating && (
+                  <View style={styles.ratingContainer}>
+                    <View style={styles.ratingBadge}>
+                      <Ionicons name="star" size={12} color="#fbbf24" />
+                      <Text style={styles.ratingText}>{recipe.rating}</Text>
+                    </View>
+                    <Text style={styles.reviewsText}>({recipe.reviews?.toLocaleString()} reviews)</Text>
                   </View>
+                )}
 
-                  {recipe.rating && (
-                    <View style={styles.ratingContainer}>
-                      <View style={styles.ratingBadge}>
-                        <Ionicons name="star" size={12} color="#fbbf24" />
-                        <Text style={styles.ratingText}>{recipe.rating}</Text>
-                      </View>
-                      <Text style={styles.reviewsText}>({recipe.reviews?.toLocaleString()} reviews)</Text>
-                    </View>
-                  )}
-
-                  <View style={styles.recipeMeta}>
-                    <View style={styles.metaItem}>
-                      <Ionicons name="time-outline" size={14} color="#64748b" />
-                      <Text style={styles.metaText}>{recipe.cookTime} min</Text>
-                    </View>
-                    <View style={styles.metaItem}>
-                      <Ionicons name="people-outline" size={14} color="#64748b" />
-                      <Text style={styles.metaText}>{recipe.servings} servings</Text>
-                    </View>
-                    <View style={styles.difficultyBadge}>
-                      <Text style={styles.difficultyText}>{recipe.difficulty}</Text>
-                    </View>
+                <View style={styles.recipeMeta}>
+                  <View style={styles.metaItem}>
+                    <Ionicons name="time-outline" size={14} color="#64748b" />
+                    <Text style={styles.metaText}>{recipe.cookTime} min</Text>
                   </View>
-
-                  <View style={styles.tagsContainer}>
-                    {recipe.tags.slice(0, 3).map((tag) => (
-                      <View key={tag} style={styles.tag}>
-                        <Text style={styles.tagText}>{tag}</Text>
-                      </View>
-                    ))}
+                  <View style={styles.metaItem}>
+                    <Ionicons name="people-outline" size={14} color="#64748b" />
+                    <Text style={styles.metaText}>{recipe.servings} servings</Text>
+                  </View>
+                  <View style={styles.difficultyBadge}>
+                    <Text style={styles.difficultyText}>{recipe.difficulty}</Text>
                   </View>
                 </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        ) : (
-          <View style={styles.emptyState}>
+
+                <View style={styles.tagsContainer}>
+                  {recipe.tags.slice(0, 3).map((tag) => (
+                    <View key={tag} style={styles.tag}>
+                      <Text style={styles.tagText}>{tag}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
+
+          {/* Quick Access sections when no search/filter */}
+          {searchQuery.length === 0 && selectedFilters.length === 0 && (
+            <View style={styles.emptyState}>
             {/* Recent Searches */}
             <View style={styles.recentSearches}>
               <Text style={styles.sectionTitle}>Recent Searches</Text>
@@ -347,8 +349,9 @@ export default function SearchScreen() {
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
-        )}
+            </View>
+          )}
+        </View>
       </ScrollView>
 
       {/* Sort Modal */}
