@@ -177,14 +177,14 @@ export const CustomAlert: React.FC<CustomAlertProps> = ({
             {message && <Text style={styles.message}>{message}</Text>}
           </View>
 
-          <View style={styles.buttonContainer}>
+          <View style={buttons.length > 2 ? styles.buttonContainerVertical : styles.buttonContainer}>
             {buttons.map((button, index) => (
               <TouchableOpacity
                 key={index}
                 style={[
-                  styles.button,
+                  buttons.length > 2 ? styles.buttonVertical : styles.button,
                   getButtonStyle(button.style),
-                  index === 0 && buttons.length > 1 && styles.firstButton,
+                  buttons.length > 2 && index < buttons.length - 1 && styles.buttonMarginBottom,
                 ]}
                 onPress={() => handleButtonPress(button)}
                 activeOpacity={0.8}
@@ -263,6 +263,11 @@ const styles = StyleSheet.create({
     width: '100%',
     gap: 12,
   },
+  buttonContainerVertical: {
+    flexDirection: 'column',
+    width: '100%',
+    gap: 8,
+  },
   button: {
     flex: 1,
     paddingVertical: 14,
@@ -272,8 +277,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 48,
   },
-  firstButton: {
-    marginRight: 0,
+  buttonVertical: {
+    width: '100%',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+  },
+  buttonMarginBottom: {
+    marginBottom: 0,
   },
   defaultButton: {
     backgroundColor: '#0ea5e9',
