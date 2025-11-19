@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, ScrollView, TouchableOpacity, StyleSheet, Image } from "react-native";
+import { View, Text, TextInput, ScrollView, TouchableOpacity, StyleSheet, Image, Modal } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -11,6 +11,8 @@ export default function SearchScreen() {
   const { category } = useLocalSearchParams<{ category?: string }>();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [sortOption, setSortOption] = useState<string>("relevance");
+  const [showSortModal, setShowSortModal] = useState(false);
 
   useEffect(() => {
     if (category && typeof category === 'string') {
@@ -28,6 +30,14 @@ export default function SearchScreen() {
   ];
 
   const recentSearches = ['Pasta', 'Chicken', 'Salad', 'Dessert'];
+
+  const sortOptions = [
+    { id: 'relevance', label: 'Most Relevant', icon: 'star-outline' },
+    { id: 'rating', label: 'Highest Rated', icon: 'star' },
+    { id: 'time', label: 'Quickest First', icon: 'time-outline' },
+    { id: 'newest', label: 'Newest First', icon: 'calendar-outline' },
+    { id: 'alphabetical', label: 'A to Z', icon: 'text-outline' }
+  ];
 
   const filteredRecipes = mockRecipes.filter(recipe => {
     const matchesSearch = recipe.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -53,6 +63,22 @@ export default function SearchScreen() {
     return matchesSearch && matchesFilters;
   });
 
+  // Sort filtered recipes
+  const sortedRecipes = [...filteredRecipes].sort((a, b) => {
+    switch (sortOption) {
+      case 'rating':
+        return (b.rating || 0) - (a.rating || 0);
+      case 'time':
+        return a.cookTime - b.cookTime;
+      case 'newest':
+        return parseInt(b.id) - parseInt(a.id); // Use ID as proxy for newest
+      case 'alphabetical':
+        return a.title.localeCompare(b.title);
+      default:
+        return 0; // relevance - maintain original order
+    }
+  });
+
   const toggleFilter = (filter: string) => {
     setSelectedFilters(prev =>
       prev.includes(filter)
@@ -66,8 +92,7 @@ export default function SearchScreen() {
   };
 
   const handleSortPress = () => {
-    // Show sort options
-    console.log('Show sort options');
+    setShowSortModal(true);
   };
 
   const handleTrendingPress = (query: string) => {
@@ -140,15 +165,17 @@ export default function SearchScreen() {
           <View style={[styles.resultsSection, styles.lastSection]}>
             <View style={styles.resultsHeader}>
               <Text style={styles.resultsCount}>
-                {filteredRecipes.length} recipes found
+                {sortedRecipes.length} recipes found
               </Text>
               <TouchableOpacity style={styles.sortButton} onPress={handleSortPress}>
-                <Text style={styles.sortText}>Sort by</Text>
+                <Text style={styles.sortText}>
+                  {sortOptions.find(opt => opt.id === sortOption)?.label || 'Sort by'}
+                </Text>
                 <Ionicons name="chevron-down" size={16} color="#0ea5e9" />
               </TouchableOpacity>
             </View>
 
-            {filteredRecipes.map((recipe) => (
+            {sortedRecipes.map((recipe) => (
               <TouchableOpacity
                 key={recipe.id}
                 onPress={() => handleRecipePress(recipe.id)}
@@ -278,6 +305,50 @@ export default function SearchScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* Sort Modal */}
+      <Modal
+        visible={showSortModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowSortModal(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowSortModal(false)}
+        >
+          <View style={styles.modalContainer}>
+            <TouchableOpacity activeOpacity={1} style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Sort Recipes</Text>
+                <TouchableOpacity onPress={() => setShowSortModal(false)}>
+                  <Ionicons name="close" size={24} color="#64748b" />
+                </TouchableOpacity>
+              </View>
+              
+              {sortOptions.map((option) => (
+                <TouchableOpacity
+                  key={option.id}
+                  style={styles.sortOption}
+                  onPress={() => {
+                    setSortOption(option.id);
+                    setShowSortModal(false);
+                  }}
+                >
+                  <View style={styles.sortOptionLeft}>
+                    <Ionicons name={option.icon as any} size={20} color="#0ea5e9" />
+                    <Text style={styles.sortOptionText}>{option.label}</Text>
+                  </View>
+                  {sortOption === option.id && (
+                    <Ionicons name="checkmark" size={20} color="#10b981" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -616,5 +687,51 @@ const styles = StyleSheet.create({
   },
   lastSection: {
     paddingBottom: 100,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    backgroundColor: 'transparent',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 40,
+    paddingTop: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1e293b',
+  },
+  sortOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  sortOptionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sortOptionText: {
+    fontSize: 16,
+    color: '#1e293b',
+    marginLeft: 12,
+    fontWeight: '500',
   },
 });
