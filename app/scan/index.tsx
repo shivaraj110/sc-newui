@@ -79,105 +79,32 @@ export default function ScanScreen() {
         return;
       }
 
-      // Extended mock ingredient combinations
-      const mockDetectionScenarios = [
-        {
-          type: 'Barcode Scan',
-          items: ['Organic chicken breast', 'Free-range eggs', 'Whole wheat flour'],
-          confidence: [98, 95, 92]
-        },
-        {
-          type: 'Label Reading',
-          items: ['Fresh basil', 'Cherry tomatoes', 'Mozzarella cheese', 'Extra virgin olive oil'],
-          confidence: [89, 94, 91, 87]
-        },
-        {
-          type: 'Mixed Detection',
-          items: ['Ground beef (80/20)', 'Yellow onions', 'Red bell peppers', 'Fresh garlic cloves'],
-          confidence: [96, 88, 90, 85]
-        },
-        {
-          type: 'Produce Recognition',
-          items: ['Atlantic salmon fillet', 'Fresh asparagus spears', 'Organic lemons', 'Fresh dill'],
-          confidence: [93, 87, 91, 82]
-        },
-        {
-          type: 'Pantry Items',
-          items: ['Baby carrots', 'Celery stalks', 'Yukon gold potatoes', 'Dried bay leaves'],
-          confidence: [90, 86, 94, 78]
-        },
-        {
-          type: 'Dairy Section',
-          items: ['Whole milk (1 gallon)', 'Sharp cheddar cheese', 'Greek yogurt', 'Unsalted butter'],
-          confidence: [97, 93, 89, 91]
-        },
-        {
-          type: 'Asian Cuisine',
-          items: ['Soy sauce', 'Sesame oil', 'Fresh ginger root', 'Green onions', 'Rice vinegar'],
-          confidence: [95, 88, 84, 87, 90]
-        },
-        {
-          type: 'Baking Essentials',
-          items: ['All-purpose flour', 'Brown sugar', 'Vanilla extract', 'Baking powder'],
-          confidence: [96, 92, 89, 91]
-        },
-        {
-          type: 'Mediterranean',
-          items: ['Kalamata olives', 'Feta cheese', 'Sun-dried tomatoes', 'Fresh oregano'],
-          confidence: [91, 88, 86, 83]
-        },
-        {
-          type: 'Breakfast Items',
-          items: ['Steel-cut oats', 'Pure maple syrup', 'Fresh blueberries', 'Almond milk'],
-          confidence: [94, 90, 85, 88]
-        },
-        {
-          type: 'Mexican Cuisine',
-          items: ['Corn tortillas', 'Black beans', 'Jalapeño peppers', 'Lime', 'Cilantro'],
-          confidence: [93, 91, 87, 89, 84]
-        },
-        {
-          type: 'Frozen Section',
-          items: ['Frozen peas', 'Vanilla ice cream', 'Frozen berries mix'],
-          confidence: [96, 92, 88]
-        },
-        {
-          type: 'Spice Detection',
-          items: ['Cumin powder', 'Paprika', 'Black peppercorns', 'Sea salt'],
-          confidence: [86, 84, 89, 95]
-        },
-        {
-          type: 'Fresh Herbs',
-          items: ['Fresh rosemary', 'Italian parsley', 'Fresh thyme', 'Mint leaves'],
-          confidence: [83, 85, 81, 79]
-        },
-        {
-          type: 'Protein Pack',
-          items: ['Boneless pork chops', 'Wild-caught shrimp', 'Organic tofu'],
-          confidence: [94, 89, 87]
-        }
-      ];
+      // Mock ingredient detection result
+      const mockDetectionScenario = {
+        type: 'Vegetable Scan',
+        items: ['Carrot', 'Onion', 'Potato', 'Beans', 'Green chilli'],
+        confidence: [95, 92, 94, 88, 90]
+      };
       
-      const randomScenario = mockDetectionScenarios[Math.floor(Math.random() * mockDetectionScenarios.length)];
-      setScannedItems(randomScenario.items);
+      setScannedItems(mockDetectionScenario.items);
       setIsScanning(false);
       
       // Calculate average confidence
       const avgConfidence = Math.round(
-        randomScenario.confidence.reduce((sum, conf) => sum + conf, 0) / randomScenario.confidence.length
+        mockDetectionScenario.confidence.reduce((sum: number, conf: number) => sum + conf, 0) / mockDetectionScenario.confidence.length
       );
 
       Alert.alert(
-        `${randomScenario.type} Success! 🎉`,
-        `Detected ${randomScenario.items.length} items (${avgConfidence}% confidence):\n\n${randomScenario.items.map((item, index) => 
-          `• ${item} (${randomScenario.confidence[index]}%)`
+        `${mockDetectionScenario.type} Success! 🎉`,
+        `Detected ${mockDetectionScenario.items.length} items (${avgConfidence}% confidence):\n\n${mockDetectionScenario.items.map((item: string, index: number) => 
+          `• ${item} (${mockDetectionScenario.confidence[index]}%)`
         ).join('\n')}\n\nWould you like to add these to your inventory?`,
         [
           { text: 'Cancel', style: 'cancel' },
           { 
             text: 'Add to Inventory', 
             onPress: () => {
-              Alert.success('Success!', `Added ${randomScenario.items.length} ingredients to inventory`);
+              Alert.success('Success!', `Added ${mockDetectionScenario.items.length} ingredients to inventory`);
               router.push('/inventory');
             }
           }
