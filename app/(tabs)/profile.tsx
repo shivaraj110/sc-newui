@@ -17,63 +17,31 @@ export default function ProfileScreen() {
   const handleMenuAction = (action: string) => {
     switch (action) {
       case "edit":
-        Alert.alert(
-          "Edit Profile",
-          "Edit profile functionality coming soon!",
-          undefined,
-          { type: "info" },
-        );
+        router.push("/profile/edit");
         break;
       case "recipes":
-        Alert.alert(
-          "My Recipes",
-          "Showing your created recipes...",
-          undefined,
-          { type: "info" },
-        );
+        router.push("/profile/my-recipes");
         break;
       case "inventory":
         router.push("/inventory");
         break;
       case "settings":
-        Alert.alert("Settings", "Settings page coming soon!", undefined, {
-          type: "info",
-        });
+        router.push("/profile/settings");
         break;
       case "notifications":
-        Alert.alert(
-          "Notifications",
-          "Notification settings coming soon!",
-          undefined,
-          { type: "info" },
-        );
+        router.push("/profile/notifications");
         break;
       case "help":
-        Alert.alert(
-          "Help & Support",
-          "Help center and support options coming soon!",
-          undefined,
-          { type: "info" },
-        );
+        router.push("/profile/help");
         break;
       case "about":
-        Alert.alert(
-          "About ShelfCook",
-          "ShelfCook v1.0.0\n\nYour personal cooking companion for discovering, creating, and planning delicious meals.",
-          undefined,
-          { type: "info" },
-        );
+        router.push("/profile/about");
         break;
     }
   };
 
   const handleEditProfile = () => {
-    Alert.alert(
-      "Edit Profile",
-      "Profile editing functionality coming soon!",
-      undefined,
-      { type: "info" },
-    );
+    router.push("/profile/edit");
   };
 
   const handleLogout = () => {
