@@ -35,6 +35,7 @@ export default function SearchScreen() {
     { id: 'relevance', label: 'Most Relevant', icon: 'star-outline' },
     { id: 'rating', label: 'Highest Rated', icon: 'star' },
     { id: 'time', label: 'Quickest First', icon: 'time-outline' },
+    { id: 'difficulty', label: 'Easiest First', icon: 'checkmark-circle-outline' },
     { id: 'newest', label: 'Newest First', icon: 'calendar-outline' },
     { id: 'alphabetical', label: 'A to Z', icon: 'text-outline' }
   ];
@@ -67,15 +68,55 @@ export default function SearchScreen() {
   const sortedRecipes = [...filteredRecipes].sort((a, b) => {
     switch (sortOption) {
       case 'rating':
-        return (b.rating || 0) - (a.rating || 0);
+        // Sort by rating (highest first), then by number of reviews as tiebreaker
+        const ratingDiff = (b.rating || 0) - (a.rating || 0);
+        if (ratingDiff === 0) {
+          return (b.reviews || 0) - (a.reviews || 0);
+        }
+        return ratingDiff;
       case 'time':
-        return a.cookTime - b.cookTime;
+        // Sort by cook time (quickest first), then by title as tiebreaker
+        const timeDiff = a.cookTime - b.cookTime;
+        if (timeDiff === 0) {
+          return a.title.localeCompare(b.title);
+        }
+        return timeDiff;
+      case 'difficulty':
+        // Sort by difficulty (easiest first), then by cook time as tiebreaker
+        const difficultyOrder = { 'Easy': 1, 'Medium': 2, 'Hard': 3 };
+        const aDiff = difficultyOrder[a.difficulty] || 2;
+        const bDiff = difficultyOrder[b.difficulty] || 2;
+        const difficultyDiff = aDiff - bDiff;
+        if (difficultyDiff === 0) {
+          return a.cookTime - b.cookTime;
+        }
+        return difficultyDiff;
       case 'newest':
-        return parseInt(b.id) - parseInt(a.id); // Use ID as proxy for newest
+        // Sort by ID (newest first), handle non-numeric IDs gracefully
+        const aId = parseInt(a.id) || 0;
+        const bId = parseInt(b.id) || 0;
+        const idDiff = bId - aId;
+        if (idDiff === 0) {
+          return a.title.localeCompare(b.title);
+        }
+        return idDiff;
       case 'alphabetical':
+        // Sort alphabetically by title
         return a.title.localeCompare(b.title);
+      case 'relevance':
       default:
-        return 0; // relevance - maintain original order
+        // For relevance, prioritize recipes with higher ratings and more reviews
+        if (searchQuery.length > 0) {
+          // If there's a search, maintain search relevance order
+          return 0;
+        } else {
+          // If no search, show highly rated recipes first
+          const ratingDiff = (b.rating || 0) - (a.rating || 0);
+          if (ratingDiff === 0) {
+            return (b.reviews || 0) - (a.reviews || 0);
+          }
+          return ratingDiff;
+        }
     }
   });
 
@@ -171,7 +212,11 @@ export default function SearchScreen() {
                 <Text style={styles.sortText}>
                   {sortOptions.find(opt => opt.id === sortOption)?.label || 'Sort by'}
                 </Text>
-                <Ionicons name="chevron-down" size={16} color="#0ea5e9" />
+                <Ionicons 
+                  name={showSortModal ? "chevron-up" : "chevron-down"} 
+                  size={16} 
+                  color="#0ea5e9" 
+                />
               </TouchableOpacity>
             </View>
 
