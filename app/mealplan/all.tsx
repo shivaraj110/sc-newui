@@ -146,11 +146,17 @@ export default function AllMealPlansScreen() {
       'What would you like to do with this meal plan?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'View Details', onPress: () => console.log(`View details for ${planId}`) },
+        { text: 'View Details', onPress: () => router.push({
+          pathname: '/mealplan/preview',
+          params: { planId: planId }
+        }) },
         { text: 'Add to My Plans', onPress: () => {
           Alert.success('Success!', `Added "${planTitle}" to your meal plans`);
         }},
-        { text: 'Preview Meals', onPress: () => console.log(`Preview meals for ${planId}`) }
+        { text: 'Preview Meals', onPress: () => router.push({
+          pathname: '/mealplan/preview',
+          params: { planId: planId }
+        }) }
       ]
     );
   };
@@ -301,7 +307,10 @@ export default function AllMealPlansScreen() {
                 <View style={styles.planActions}>
                   <TouchableOpacity 
                     style={styles.previewButton}
-                    onPress={() => console.log(`Preview ${plan.id}`)}
+                    onPress={() => router.push({
+                      pathname: '/mealplan/preview',
+                      params: { planId: plan.id }
+                    })}
                   >
                     <Ionicons name="eye-outline" size={16} color="#0ea5e9" />
                     <Text style={styles.previewButtonText}>Preview</Text>

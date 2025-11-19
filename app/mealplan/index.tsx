@@ -32,14 +32,47 @@ export default function MealPlanScreen() {
   };
 
   const handleMealAction = (mealId: string, mealTitle: string) => {
+    const meal = mockMealPlan.find(m => m.id === mealId);
+    if (!meal) return;
+
     Alert.alert(
       mealTitle,
       'What would you like to do?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'View Recipe', onPress: () => console.log(`View recipe for meal ${mealId}`) },
-        { text: 'Edit Meal', onPress: () => console.log(`Edit meal ${mealId}`) },
-        { text: 'Remove', style: 'destructive', onPress: () => console.log(`Remove meal ${mealId}`) }
+        { 
+          text: 'View Recipe', 
+          onPress: () => router.push(`/recipes/${meal.recipeId}`)
+        },
+        { 
+          text: 'Edit Meal', 
+          onPress: () => router.push({
+            pathname: '/mealplan/edit-meal',
+            params: { mealId: meal.id }
+          })
+        },
+        { 
+          text: 'Remove', 
+          style: 'destructive', 
+          onPress: () => handleRemoveMeal(mealId, mealTitle)
+        }
+      ]
+    );
+  };
+
+  const handleRemoveMeal = (mealId: string, mealTitle: string) => {
+    Alert.alert(
+      'Remove Meal',
+      `Are you sure you want to remove "${mealTitle}" from your meal plan?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Remove', 
+          style: 'destructive',
+          onPress: () => {
+            Alert.success('Removed!', `"${mealTitle}" has been removed from your meal plan`);
+          }
+        }
       ]
     );
   };

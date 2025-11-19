@@ -195,7 +195,24 @@ export const getMealsForDate = (date: string) => {
   return mockMealPlan.filter(item => item.date === date);
 };
 
-export const getMealsForWeek = (startDate: string) => {
-  // Simple implementation - in real app would calculate week range
+export const getMealsForWeek = () => {
   return mockMealPlan;
+};
+
+export const removeMealFromPlan = (mealId: string) => {
+  const index = mockMealPlan.findIndex(meal => meal.id === mealId);
+  if (index > -1) {
+    mockMealPlan.splice(index, 1);
+    return true;
+  }
+  return false;
+};
+
+export const updateMealInPlan = (mealId: string, updates: Partial<MealPlanItem>) => {
+  const index = mockMealPlan.findIndex(meal => meal.id === mealId);
+  if (index > -1) {
+    mockMealPlan[index] = { ...mockMealPlan[index], ...updates };
+    return mockMealPlan[index];
+  }
+  return null;
 };
