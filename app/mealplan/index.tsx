@@ -254,7 +254,7 @@ export default function MealPlanScreen() {
                   <Text style={styles.summaryTitle}>Weekly Overview</Text>
                   <Text style={styles.summarySubtitle}>Nov 17 - Nov 23</Text>
                 </View>
-                <TouchableOpacity style={styles.viewDetailsButton}>
+                <TouchableOpacity style={styles.viewDetailsButton} onPress={() => router.push('/mealplan/all')}>
                   <Text style={styles.viewDetailsText}>View All</Text>
                   <Ionicons name="chevron-forward" size={16} color="white" />
                 </TouchableOpacity>

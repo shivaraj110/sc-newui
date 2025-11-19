@@ -1,11 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Alert } from '../components/AlertProvider';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function ScanScreen() {
   const router = useRouter();
@@ -14,6 +15,7 @@ export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [facing] = useState<CameraType>('back');
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const scanAnimation = useRef(new Animated.Value(0)).current;
 
   // Rotate tips every 4 seconds
@@ -48,6 +50,40 @@ export default function ScanScreen() {
         }),
       ])
     ).start();
+  };
+
+  const pickImageFromGallery = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (!permissionResult.granted) {
+        Alert.alert(
+          'Permission Required',
+          'Please grant access to your photo library to select images.',
+          [{ text: 'OK' }],
+          { type: 'warning' }
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setSelectedImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      Alert.alert(
+        'Error',
+        'Failed to select image from gallery. Please try again.',
+        [{ text: 'OK' }],
+        { type: 'error' }
+      );
+    }
   };
 
   const handleScan = () => {
@@ -145,7 +181,57 @@ export default function ScanScreen() {
 
       {/* Camera View */}
       <View style={styles.cameraContainer}>
-        {permission === null ? (
+        {selectedImage ? (
+          <View style={styles.cameraView}>
+            <Image source={{ uri: selectedImage }} style={styles.selectedImage} />
+            
+            {/* Corner overlays */}
+            <View style={[styles.corner, styles.topLeft]} />
+            <View style={[styles.corner, styles.topRight]} />
+            <View style={[styles.corner, styles.bottomLeft]} />
+            <View style={[styles.corner, styles.bottomRight]} />
+            
+            {/* Scanning line animation */}
+            {isScanning && (
+              <Animated.View
+                style={[
+                  styles.scanningLine,
+                  { transform: [{ translateY }] }
+                ]}
+              />
+            )}
+
+            {/* Center guide */}
+            <View style={styles.centerGuide}>
+              <View style={styles.guideFrame}>
+                <Ionicons name="scan-outline" size={48} color="rgba(255,255,255,0.8)" />
+                <Text style={styles.guideText}>
+                  {isScanning ? 'Scanning...' : 'Ready to scan image'}
+                </Text>
+              </View>
+            </View>
+
+            {/* Status overlay */}
+            {isScanning && (
+              <View style={styles.scanningOverlay}>
+                <LinearGradient
+                  colors={['transparent', 'rgba(14, 165, 233, 0.2)', 'transparent']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0, y: 1 }}
+                  style={styles.scanningGradient}
+                >
+                  <View style={styles.scanningIndicator}>
+                    <Ionicons name="flash" size={20} color="white" />
+                    <Text style={styles.scanningText}>
+                      {Math.random() > 0.7 ? 'Processing image...' : 
+                       Math.random() > 0.4 ? 'Detecting ingredients...' : 'Analyzing photo...'}
+                    </Text>
+                  </View>
+                </LinearGradient>
+              </View>
+            )}
+          </View>
+        ) : permission === null ? (
           <View style={styles.cameraView}>
             <View style={styles.centerGuide}>
               <View style={styles.guideFrame}>
@@ -266,6 +352,13 @@ export default function ScanScreen() {
               <Ionicons name="add-circle-outline" size={20} color="#0ea5e9" />
             </View>
             <Text style={styles.altActionText}>Manual Entry</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.altAction} onPress={pickImageFromGallery}>
+            <View style={styles.altActionIcon}>
+              <Ionicons name="images-outline" size={20} color="#0ea5e9" />
+            </View>
+            <Text style={styles.altActionText}>Gallery</Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.altAction} onPress={() => router.push('/shopping')}>
@@ -525,7 +618,7 @@ const styles = StyleSheet.create({
   },
   alternativeActions: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
     marginBottom: 20,
   },
   altAction: {
@@ -604,5 +697,13 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: 4,
+  },
+  selectedImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 24,
   },
 });
