@@ -1,15 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, ScrollView, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { mockRecipes, categories } from "../data/recipes";
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function SearchScreen() {
   const router = useRouter();
+  const { category } = useLocalSearchParams<{ category?: string }>();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (category && typeof category === 'string') {
+      setSearchQuery(category);
+    }
+  }, [category]);
 
   const filters = [
     'Under 30 mins',
@@ -24,7 +31,8 @@ export default function SearchScreen() {
 
   const filteredRecipes = mockRecipes.filter(recipe => {
     const matchesSearch = recipe.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         recipe.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+                         recipe.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                         recipe.category.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesFilters = selectedFilters.length === 0 ||
       selectedFilters.some(filter => {
@@ -32,7 +40,7 @@ export default function SearchScreen() {
           case 'Under 30 mins':
             return recipe.cookTime <= 30;
           case 'Vegetarian':
-            return recipe.tags.includes('Vegan') || recipe.category.toLowerCase().includes('vegetarian');
+            return recipe.tags.includes('Vegan') || recipe.tags.includes('Vegetarian') || recipe.category.toLowerCase().includes('vegetarian');
           case 'Easy':
             return recipe.difficulty === 'Easy';
           case 'Quick':

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,7 +14,7 @@ export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [facing] = useState<CameraType>('back');
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
-  const scanAnimation = new Animated.Value(0);
+  const scanAnimation = useRef(new Animated.Value(0)).current;
 
   // Rotate tips every 4 seconds
   const tips = [
