@@ -9,10 +9,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { useAuth, useUser } from '@clerk/clerk-expo';
 import { Alert } from "../components/AlertProvider";
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { signOut } = useAuth();
+  const { user } = useUser();
 
   const handleMenuAction = (action: string) => {
     switch (action) {
@@ -45,9 +48,15 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = () => {
-    Alert.confirm("Logout", "Are you sure you want to logout?", () =>
-      Alert.success("Logged Out", "You have been successfully logged out."),
-    );
+    Alert.confirm("Logout", "Are you sure you want to logout?", async () => {
+      try {
+        await signOut();
+        router.replace('/auth/sign-in' as any);
+        Alert.success("Logged Out", "You have been successfully logged out.");
+      } catch (err) {
+        Alert.error("Error", "Failed to logout. Please try again.");
+      }
+    });
   };
 
   const stats = [
@@ -132,7 +141,11 @@ export default function ProfileScreen() {
                 <Ionicons name="person" size={48} color="#0ea5e9" />
               </LinearGradient>
             </View>
-            <Text style={styles.userName}>Tejaswini S C</Text>
+            <Text style={styles.userName}>
+              {user?.firstName && user?.lastName 
+                ? `${user.firstName} ${user.lastName}` 
+                : user?.emailAddresses[0]?.emailAddress || 'User'}
+            </Text>
             <Text style={styles.userBio}>Recipe Enthusiast & Food Blogger</Text>
 
             <TouchableOpacity
