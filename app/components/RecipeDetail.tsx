@@ -22,6 +22,38 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
   onStartCooking,
 }) => {
   const [checkedIngredients, setCheckedIngredients] = useState<Set<string>>(new Set());
+  const [servings, setServings] = useState(recipe.servings);
+
+  const calculateIngredientQuantity = (originalAmount: number, originalServings: number, newServings: number) => {
+    const perServingAmount = originalAmount / originalServings;
+    const scaledAmount = perServingAmount * newServings;
+    
+    if (scaledAmount >= 100) {
+      return Math.round(scaledAmount).toString();
+    } else if (scaledAmount >= 10) {
+      return scaledAmount.toFixed(1);
+    } else if (scaledAmount >= 1) {
+      return scaledAmount.toFixed(2).replace(/\.?0+$/, '');
+    } else {
+      return scaledAmount.toFixed(2);
+    }
+  };
+
+  const scaleNutrition = (value: number) => {
+    const perServingValue = value / recipe.servings;
+    const scaled = perServingValue * servings;
+    return Math.round(scaled).toString();
+  };
+
+  const incrementServings = () => {
+    setServings(prev => prev + 1);
+  };
+
+  const decrementServings = () => {
+    if (servings > 1) {
+      setServings(prev => prev - 1);
+    }
+  };
 
   const toggleIngredient = (ingredientId: string) => {
     const newChecked = new Set(checkedIngredients);
@@ -118,7 +150,15 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
             <View style={[styles.statIcon, { backgroundColor: '#ecfdf5' }]}>
               <Ionicons name="people-outline" size={20} color="#059669" />
             </View>
-            <Text style={styles.statValue}>{recipe.servings}</Text>
+            <View style={styles.servingsControl}>
+              <TouchableOpacity onPress={decrementServings} style={styles.servingsButton}>
+                <Ionicons name="remove" size={16} color="#059669" />
+              </TouchableOpacity>
+              <Text style={styles.statValue}>{servings}</Text>
+              <TouchableOpacity onPress={incrementServings} style={styles.servingsButton}>
+                <Ionicons name="add" size={16} color="#059669" />
+              </TouchableOpacity>
+            </View>
             <Text style={styles.statLabel}>Servings</Text>
           </View>
           <View style={styles.statCard}>
@@ -132,7 +172,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
             <View style={[styles.statIcon, { backgroundColor: '#fef2f2' }]}>
               <Ionicons name="flame-outline" size={20} color="#dc2626" />
             </View>
-            <Text style={styles.statValue}>{recipe.nutrition.calories}</Text>
+            <Text style={styles.statValue}>{scaleNutrition(recipe.nutrition.calories)}</Text>
             <Text style={styles.statLabel}>Calories</Text>
           </View>
         </View>
@@ -228,7 +268,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
                       {ingredient.name}
                     </Text>
                     <Text style={styles.ingredientAmount}>
-                      {ingredient.amount} {ingredient.unit}
+                      {calculateIngredientQuantity(ingredient.amount, recipe.servings, servings)} {ingredient.unit}
                     </Text>
                   </View>
                 </View>
@@ -284,7 +324,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
                 >
                   <Ionicons name="flame" size={18} color="white" />
                 </LinearGradient>
-                <Text style={styles.nutritionValue}>{recipe.nutrition.calories}</Text>
+                <Text style={styles.nutritionValue}>{scaleNutrition(recipe.nutrition.calories)}</Text>
                 <Text style={styles.nutritionLabel}>Calories</Text>
               </View>
               <View style={styles.nutritionItem}>
@@ -294,7 +334,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
                 >
                   <Ionicons name="fitness" size={18} color="white" />
                 </LinearGradient>
-                <Text style={styles.nutritionValue}>{recipe.nutrition.protein}g</Text>
+                <Text style={styles.nutritionValue}>{scaleNutrition(recipe.nutrition.protein)}g</Text>
                 <Text style={styles.nutritionLabel}>Protein</Text>
               </View>
               <View style={styles.nutritionItem}>
@@ -304,7 +344,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
                 >
                   <Ionicons name="nutrition" size={18} color="white" />
                 </LinearGradient>
-                <Text style={styles.nutritionValue}>{recipe.nutrition.carbs}g</Text>
+                <Text style={styles.nutritionValue}>{scaleNutrition(recipe.nutrition.carbs)}g</Text>
                 <Text style={styles.nutritionLabel}>Carbs</Text>
               </View>
               <View style={styles.nutritionItem}>
@@ -314,7 +354,7 @@ export const RecipeDetail: React.FC<RecipeDetailProps> = ({
                 >
                   <Ionicons name="water" size={18} color="white" />
                 </LinearGradient>
-                <Text style={styles.nutritionValue}>{recipe.nutrition.fat}g</Text>
+                <Text style={styles.nutritionValue}>{scaleNutrition(recipe.nutrition.fat)}g</Text>
                 <Text style={styles.nutritionLabel}>Fat</Text>
               </View>
             </View>
@@ -477,6 +517,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#64748b',
     fontWeight: '600',
+  },
+  servingsControl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  servingsButton: {
+    backgroundColor: '#f0fdfa',
+    borderRadius: 8,
+    padding: 4,
   },
   tagsSection: {
     paddingHorizontal: 20,
