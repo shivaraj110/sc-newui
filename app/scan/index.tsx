@@ -7,16 +7,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Alert } from '../components/AlertProvider';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
+import { analyzeImage, DetectedIngredient } from '../services/visionApi';
 
 export default function ScanScreen() {
   const router = useRouter();
   const [isScanning, setIsScanning] = useState(false);
-  const [scannedItems, setScannedItems] = useState<string[]>([]);
+  const [scannedItems, setScannedItems] = useState<DetectedIngredient[]>([]);
   const [permission, requestPermission] = useCameraPermissions();
   const [facing] = useState<CameraType>('back');
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const scanAnimation = useRef(new Animated.Value(0)).current;
+  const cameraRef = useRef<any>(null);
 
   // Rotate tips every 4 seconds
   const tips = [
@@ -75,6 +77,7 @@ export default function ScanScreen() {
 
       if (!result.canceled && result.assets[0]) {
         setSelectedImage(result.assets[0].uri);
+        setScannedItems([]);
       }
     } catch (error) {
       Alert.alert(
@@ -86,7 +89,7 @@ export default function ScanScreen() {
     }
   };
 
-  const handleScan = () => {
+  const handleScan = async () => {
     if (!permission?.granted) {
       requestPermission();
       return;
@@ -95,19 +98,37 @@ export default function ScanScreen() {
     setIsScanning(true);
     startScanAnimation();
 
-    // Dynamic scanning duration (1.5 to 4 seconds)
-    const scanDuration = Math.random() * 2500 + 1500;
+    try {
+      let imageUri: string;
 
-    // Mock scanning process - simulate ingredient detection
-    setTimeout(() => {
-      // 15% chance of scanning failure for realism
-      if (Math.random() < 0.15) {
+      if (selectedImage) {
+        imageUri = selectedImage;
+      } else {
+        if (!cameraRef.current) {
+          throw new Error('Camera is not ready');
+        }
+
+        const photo = await cameraRef.current.takePictureAsync({
+          quality: 0.8,
+          base64: false,
+        });
+
+        if (!photo || !photo.uri) {
+          throw new Error('Failed to capture photo');
+        }
+
+        imageUri = photo.uri;
+      }
+
+      const result = await analyzeImage(imageUri);
+
+      if (!result.ingredients || result.ingredients.length === 0) {
         setIsScanning(false);
         Alert.alert(
-          'Scan Unsuccessful 📷',
-          'Could not detect clear ingredients. Try adjusting lighting or moving closer to the labels.',
+          'No Ingredients Found 📷',
+          'Could not detect any ingredients in the image. Try:\n• Better lighting\n• Clearer view of ingredients\n• Moving closer to labels',
           [
-            { text: 'Try Again', onPress: handleScan },
+            { text: 'Try Again', onPress: () => setSelectedImage(null) },
             { text: 'Manual Entry', onPress: () => router.push('/inventory') },
           ],
           { type: 'warning' }
@@ -115,39 +136,44 @@ export default function ScanScreen() {
         return;
       }
 
-      // Mock ingredient detection result
-      const mockDetectionScenario = {
-        type: 'Vegetable Scan',
-        items: ['Carrot', 'Onion', 'Potato', 'Beans', 'Green chilli'],
-        confidence: [95, 92, 94, 88, 90]
-      };
-      
-      setScannedItems(mockDetectionScenario.items);
+      setScannedItems(result.ingredients);
       setIsScanning(false);
-      
-      // Calculate average confidence
+
       const avgConfidence = Math.round(
-        mockDetectionScenario.confidence.reduce((sum: number, conf: number) => sum + conf, 0) / mockDetectionScenario.confidence.length
+        result.ingredients.reduce((sum, item) => sum + item.confidence, 0) / result.ingredients.length
       );
 
       Alert.alert(
-        `${mockDetectionScenario.type} Success! 🎉`,
-        `Detected ${mockDetectionScenario.items.length} items (${avgConfidence}% confidence):\n\n${mockDetectionScenario.items.map((item: string, index: number) => 
-          `• ${item} (${mockDetectionScenario.confidence[index]}%)`
+        `Scan Success! 🎉`,
+        `Detected ${result.ingredients.length} ingredients (${avgConfidence}% confidence):\n\n${result.ingredients.map(item => 
+          `• ${item.name} (${item.confidence}%)`
         ).join('\n')}\n\nWould you like to add these to your inventory?`,
         [
           { text: 'Cancel', style: 'cancel' },
           { 
             text: 'Add to Inventory', 
             onPress: () => {
-              Alert.success('Success!', `Added ${mockDetectionScenario.items.length} ingredients to inventory`);
+              Alert.success('Success!', `Added ${result.ingredients.length} ingredients to inventory`);
               router.push('/inventory');
             }
           }
         ],
         { type: 'success' }
       );
-    }, scanDuration);
+    } catch (error: any) {
+      setIsScanning(false);
+      console.error('Scan error:', error);
+      
+      Alert.alert(
+        'Scan Error',
+        error.message || 'Failed to scan image. Please try again.',
+        [
+          { text: 'Try Again', onPress: () => setSelectedImage(null) },
+          { text: 'Manual Entry', onPress: () => router.push('/inventory') },
+        ],
+        { type: 'error' }
+      );
+    }
   };
 
   const translateY = scanAnimation.interpolate({
@@ -256,7 +282,7 @@ export default function ScanScreen() {
             </View>
           </View>
         ) : (
-          <CameraView style={styles.cameraView} facing={facing}>
+          <CameraView style={styles.cameraView} facing={facing} ref={cameraRef}>
             {/* Corner overlays */}
             <View style={[styles.corner, styles.topLeft]} />
             <View style={[styles.corner, styles.topRight]} />
@@ -388,12 +414,10 @@ export default function ScanScreen() {
                       color={index === 0 ? "#10b981" : index === 1 ? "#f59e0b" : "#8b5cf6"} 
                     />
                   </View>
-                  <Text style={styles.recentItemText}>{item}</Text>
-                  {Math.random() > 0.6 && (
-                    <Text style={styles.recentItemBadge}>
-                      {Math.random() > 0.5 ? 'Organic' : 'Fresh'}
-                    </Text>
-                  )}
+                  <Text style={styles.recentItemText}>{item.name}</Text>
+                  <Text style={styles.recentItemBadge}>
+                    {item.confidence}%
+                  </Text>
                 </View>
               ))}
               {scannedItems.length > 3 && (
