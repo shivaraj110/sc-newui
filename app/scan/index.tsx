@@ -153,8 +153,10 @@ export default function ScanScreen() {
           { 
             text: 'Add to Inventory', 
             onPress: () => {
-              Alert.success('Success!', `Added ${result.ingredients.length} ingredients to inventory`);
-              router.push('/inventory');
+              router.push({
+                pathname: '/inventory/bulk-add',
+                params: { ingredients: JSON.stringify(result.ingredients) }
+              } as any);
             }
           }
         ],
