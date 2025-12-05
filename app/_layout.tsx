@@ -3,6 +3,7 @@ import { useRef, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { ClerkProvider, ClerkLoaded } from '@clerk/clerk-expo';
 import { AlertProvider, Alert, AlertProviderRef } from "./components/AlertProvider";
+import * as SecureStore from 'expo-secure-store';
 import "../global.css";
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
@@ -13,6 +14,23 @@ if (!publishableKey) {
   );
 }
 
+const tokenCache = {
+  async getToken(key: string) {
+    try {
+      return await SecureStore.getItemAsync(key);
+    } catch (err) {
+      return null;
+    }
+  },
+  async saveToken(key: string, value: string) {
+    try {
+      await SecureStore.setItemAsync(key, value);
+    } catch (err) {
+      return;
+    }
+  },
+};
+
 export default function RootLayout() {
   const alertRef = useRef<AlertProviderRef>(null);
 
@@ -21,7 +39,7 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <ClerkProvider publishableKey={publishableKey}>
+    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
       <ClerkLoaded>
         <StatusBar style="dark" backgroundColor="transparent" translucent />
         <Stack screenOptions={{ headerShown: false }}>

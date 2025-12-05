@@ -13,11 +13,15 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSignUp } from '@clerk/clerk-expo';
+import { useSignUp, useOAuth } from '@clerk/clerk-expo';
 import { Link, useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function SignUpScreen() {
   const { isLoaded, signUp, setActive } = useSignUp();
+  const { startOAuthFlow: startGoogleOAuth } = useOAuth({ strategy: 'oauth_google' });
   const router = useRouter();
 
   const [emailAddress, setEmailAddress] = useState('');
@@ -70,6 +74,19 @@ export default function SignUpScreen() {
       setError(err.errors?.[0]?.message || 'An error occurred');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const onGoogleSignUp = async () => {
+    try {
+      const { createdSessionId, setActive } = await startGoogleOAuth();
+
+      if (createdSessionId) {
+        await setActive!({ session: createdSessionId });
+        router.replace('/(tabs)');
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred with Google sign up');
     }
   };
 
@@ -341,7 +358,7 @@ export default function SignUpScreen() {
               </View>
 
               {/* Social Login Buttons */}
-              <TouchableOpacity style={styles.socialButton}>
+              <TouchableOpacity style={styles.socialButton} onPress={onGoogleSignUp}>
                 <Ionicons name="logo-google" size={20} color="#4285f4" />
                 <Text style={styles.socialButtonText}>Continue with Google</Text>
               </TouchableOpacity>
