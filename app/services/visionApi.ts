@@ -39,6 +39,7 @@ const KITCHEN_INGREDIENTS = [
   "tortilla", "pita bread", "naan", "flatbread",
   "flour", "all-purpose flour", "wheat flour", "bread flour", "cake flour", "almond flour",
   "cornstarch", "cornmeal", "oats", "oatmeal", "quinoa", "couscous", "bulgur", "barley",
+  "noodles", "ramen", "udon", "soba", "rice noodles", "egg noodles",
   
   "sugar", "white sugar", "brown sugar", "powdered sugar", "cane sugar", "coconut sugar",
   "honey", "maple syrup", "agave", "molasses",
@@ -92,6 +93,15 @@ const KITCHEN_INGREDIENTS = [
   "wine", "red wine", "white wine", "cooking wine", "beer",
   "chocolate", "dark chocolate", "milk chocolate", "cocoa powder", "chocolate chips",
   "baking powder", "baking soda", "yeast", "gelatin", "cornflour",
+  
+  "water", "juice", "coffee", "tea", "green tea", "black tea",
+  "pickle", "pickles", "olives", "capers",
+  "jam", "jelly", "marmalade", "peanut butter and jelly",
+  "cereal", "granola", "muesli",
+  "crackers", "chips", "pretzels", "popcorn",
+  "cookies", "biscuits", "cake", "muffins", "brownies",
+  "ice cream", "sorbet", "frozen yogurt",
+  "canned tomatoes", "canned beans", "canned tuna", "canned corn",
 ];
 
 const GENERIC_LABELS = [
@@ -99,7 +109,8 @@ const GENERIC_LABELS = [
   "food group", "whole food", "vegan food", "superfood", "plant",
   "leaf vegetable", "local food", "staple food", "cuisine", "dish",
   "recipe", "cooking", "kitchen", "grocery", "market", "organic",
-  "fresh", "healthy", "nutrition", "diet", "meal", "snack"
+  "fresh", "healthy", "nutrition", "diet", "meal", "snack",
+  "whole foods", "freshness", "meal", "flowering plant", "terrestrial plant",
 ];
 
 export async function analyzeImage(imageUri: string): Promise<VisionApiResult> {
@@ -186,10 +197,6 @@ function parseVisionApiResponse(response: any): VisionApiResult {
       const labelName = label.description.toLowerCase().trim();
       const confidence = Math.round(label.score * 100);
       
-      if (confidence < 70) {
-        return;
-      }
-      
       if (GENERIC_LABELS.includes(labelName)) {
         return;
       }
@@ -203,7 +210,7 @@ function parseVisionApiResponse(response: any): VisionApiResult {
         
         if (ingredientWords.length === 1 && labelWords.length === 1) {
           if (ingredientLower.includes(labelName) || labelName.includes(ingredientLower)) {
-            return ingredientLower.length - labelName.length <= 3;
+            return Math.abs(ingredientLower.length - labelName.length) <= 3;
           }
         }
         
@@ -227,10 +234,6 @@ function parseVisionApiResponse(response: any): VisionApiResult {
     response.localizedObjectAnnotations.forEach((obj: any) => {
       const objName = obj.name.toLowerCase().trim();
       const confidence = Math.round(obj.score * 100);
-      
-      if (confidence < 70) {
-        return;
-      }
       
       if (GENERIC_LABELS.includes(objName)) {
         return;
@@ -256,7 +259,7 @@ function parseVisionApiResponse(response: any): VisionApiResult {
   ingredients.sort((a, b) => b.confidence - a.confidence);
 
   return {
-    ingredients: ingredients.slice(0, 10),
+    ingredients: ingredients.slice(0, 15),
     labels: labels.slice(0, 10),
     text: detectedText.join(" "),
   };
