@@ -6,6 +6,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Alert } from '../components/AlertProvider';
 import { InventoryItem, inventoryCategories } from '../data/inventory';
+import { InventoryStorage } from '../services/inventoryStorage';
 
 interface ScannedIngredient {
   name: string;
@@ -69,7 +70,7 @@ export default function BulkAddScreen() {
     return icons[category] || 'basket';
   };
 
-  const handleSaveItem = () => {
+  const handleSaveItem = async () => {
     if (!formData.amount.trim()) {
       Alert.error('Missing Information', 'Please enter the amount.');
       return;
@@ -106,12 +107,22 @@ export default function BulkAddScreen() {
         notes: ''
       });
     } else {
-      Alert.success('Complete!', `Added ${addedItems.length + 1} ingredients to inventory`);
-      router.back();
+      await finishAdding([...addedItems, newItem]);
     }
   };
 
-  const handleSkip = () => {
+  const finishAdding = async (items: InventoryItem[]) => {
+    try {
+      await InventoryStorage.addItems(items);
+      Alert.success('Complete!', `Added ${items.length} ingredient${items.length > 1 ? 's' : ''} to inventory`);
+      router.back();
+    } catch (error) {
+      console.error('Failed to save items:', error);
+      Alert.error('Error', 'Failed to save items. Please try again.');
+    }
+  };
+
+  const handleSkip = async () => {
     if (currentIndex < scannedIngredients.length - 1) {
       const nextIndex = currentIndex + 1;
       setCurrentIndex(nextIndex);
@@ -125,20 +136,22 @@ export default function BulkAddScreen() {
       });
     } else {
       if (addedItems.length > 0) {
-        Alert.success('Complete!', `Added ${addedItems.length} ingredients to inventory`);
+        await finishAdding(addedItems);
+      } else {
+        router.back();
       }
-      router.back();
     }
   };
 
-  const handleRemove = () => {
+  const handleRemove = async () => {
     const updatedIngredients = scannedIngredients.filter((_, idx) => idx !== currentIndex);
     
     if (updatedIngredients.length === 0) {
       if (addedItems.length > 0) {
-        Alert.success('Complete!', `Added ${addedItems.length} ingredients to inventory`);
+        await finishAdding(addedItems);
+      } else {
+        router.back();
       }
-      router.back();
       return;
     }
 

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Modal } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Modal, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -7,10 +7,14 @@ import { mockInventory, inventoryCategories, InventoryItem } from '../data/inven
 import { mockRecipes, Recipe } from '../data/recipes';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Alert } from '../components/AlertProvider';
+import { InventoryStorage } from '../services/inventoryStorage';
+
+const units = ['pieces', 'kg', 'g', 'L', 'ml', 'cups', 'tbsp', 'tsp', 'lbs', 'oz', 'dozen', 'bunches', 'cans'];
 
 export default function InventoryScreen() {
   const router = useRouter();
-  const [inventory, setInventory] = useState<InventoryItem[]>(mockInventory);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
@@ -36,6 +40,30 @@ export default function InventoryScreen() {
     expirationDate: '',
     notes: ''
   });
+
+  useEffect(() => {
+    loadInventory();
+  }, []);
+
+  const loadInventory = async () => {
+    setIsLoading(true);
+    try {
+      const hasStored = await InventoryStorage.hasStoredInventory();
+      if (hasStored) {
+        const storedInventory = await InventoryStorage.loadInventory();
+        setInventory(storedInventory);
+      } else {
+        setInventory(mockInventory);
+        await InventoryStorage.saveInventory(mockInventory);
+      }
+    } catch (error) {
+      console.error('Failed to load inventory:', error);
+      Alert.error('Error', 'Failed to load inventory. Using default data.');
+      setInventory(mockInventory);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Recipe search functionality
   const findRecipesWithAvailableIngredients = (): Array<{recipe: Recipe, matchedIngredients: number, totalIngredients: number, matchPercentage: number}> => {
@@ -122,7 +150,7 @@ export default function InventoryScreen() {
     setShowAddItem(true);
   };
 
-  const handleSaveItem = () => {
+  const handleSaveItem = async () => {
     if (!formData.name.trim() || !formData.amount.trim()) {
       Alert.error('Missing Information', 'Please enter both name and amount.');
       return;
@@ -134,38 +162,42 @@ export default function InventoryScreen() {
       return;
     }
 
-    if (editingItem) {
-      // Edit existing item
-      setInventory(prev =>
-        prev.map(item =>
-          item.id === editingItem.id
-            ? {
-                ...item,
-                name: formData.name.trim(),
-                amount: amount,
-                unit: formData.unit,
-                category: formData.category,
-                expirationDate: formData.expirationDate || undefined,
-                notes: formData.notes || undefined
-              }
-            : item
-        )
-      );
-      Alert.success('Item Updated', `${formData.name} has been updated.`);
-    } else {
-      // Add new item
-      const newItem: InventoryItem = {
-        id: Date.now().toString(),
-        name: formData.name.trim(),
-        amount: amount,
-        unit: formData.unit,
-        category: formData.category,
-        expirationDate: formData.expirationDate || undefined,
-        dateAdded: new Date().toISOString().split('T')[0],
-        notes: formData.notes || undefined
-      };
-      setInventory(prev => [...prev, newItem]);
-      Alert.success('Item Added', `${formData.name} has been added to your inventory.`);
+    try {
+      if (editingItem) {
+        const updatedData: Partial<InventoryItem> = {
+          name: formData.name.trim(),
+          amount: amount,
+          unit: formData.unit,
+          category: formData.category,
+          expirationDate: formData.expirationDate || undefined,
+          notes: formData.notes || undefined
+        };
+        await InventoryStorage.updateItem(editingItem.id, updatedData);
+        setInventory(prev =>
+          prev.map(item =>
+            item.id === editingItem.id ? { ...item, ...updatedData } : item
+          )
+        );
+        Alert.success('Item Updated', `${formData.name} has been updated.`);
+      } else {
+        const newItem: InventoryItem = {
+          id: Date.now().toString(),
+          name: formData.name.trim(),
+          amount: amount,
+          unit: formData.unit,
+          category: formData.category,
+          expirationDate: formData.expirationDate || undefined,
+          dateAdded: new Date().toISOString().split('T')[0],
+          notes: formData.notes || undefined
+        };
+        await InventoryStorage.addItem(newItem);
+        setInventory(prev => [...prev, newItem]);
+        Alert.success('Item Added', `${formData.name} has been added to your inventory.`);
+      }
+    } catch (error) {
+      console.error('Failed to save item:', error);
+      Alert.error('Error', 'Failed to save item. Please try again.');
+      return;
     }
 
     resetForm();
@@ -176,9 +208,15 @@ export default function InventoryScreen() {
     Alert.confirm(
       'Delete Item',
       `Remove "${item.name}" from your inventory?`,
-      () => {
-        setInventory(prev => prev.filter(i => i.id !== item.id));
-        Alert.success('Item Deleted', `${item.name} has been removed.`);
+      async () => {
+        try {
+          await InventoryStorage.deleteItem(item.id);
+          setInventory(prev => prev.filter(i => i.id !== item.id));
+          Alert.success('Item Deleted', `${item.name} has been removed.`);
+        } catch (error) {
+          console.error('Failed to delete item:', error);
+          Alert.error('Error', 'Failed to delete item. Please try again.');
+        }
       }
     );
   };
@@ -250,6 +288,17 @@ export default function InventoryScreen() {
     const today = new Date();
     return expDate < today;
   };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0ea5e9" />
+          <Text style={styles.loadingText}>Loading inventory...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -670,12 +719,29 @@ export default function InventoryScreen() {
                 </View>
                 <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
                   <Text style={styles.inputLabel}>Unit</Text>
-                  <View style={styles.pickerContainer}>
-                    <TouchableOpacity style={styles.pickerButton}>
-                      <Text style={styles.pickerText}>{formData.unit}</Text>
-                      <Ionicons name="chevron-down" size={16} color="#64748b" />
-                    </TouchableOpacity>
-                  </View>
+                  <ScrollView 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false} 
+                    style={styles.unitPicker}
+                  >
+                    {units.map((unit) => (
+                      <TouchableOpacity
+                        key={unit}
+                        onPress={() => setFormData(prev => ({ ...prev, unit }))}
+                        style={[
+                          styles.unitChip,
+                          formData.unit === unit && styles.unitChipActive
+                        ]}
+                      >
+                        <Text style={[
+                          styles.unitChipText,
+                          formData.unit === unit && styles.unitChipTextActive
+                        ]}>
+                          {unit}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
                 </View>
               </View>
 
@@ -1446,6 +1512,30 @@ const styles = StyleSheet.create({
   categoryPickerTextActive: {
     color: 'white',
   },
+  unitPicker: {
+    marginTop: 8,
+  },
+  unitChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginRight: 8,
+    borderRadius: 12,
+    backgroundColor: '#f1f5f9',
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
+  },
+  unitChipActive: {
+    backgroundColor: '#0ea5e9',
+    borderColor: '#0ea5e9',
+  },
+  unitChipText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  unitChipTextActive: {
+    color: 'white',
+  },
   modalActions: {
     flexDirection: 'row',
     paddingHorizontal: 24,
@@ -1773,5 +1863,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: 'white',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#64748b',
   },
 });
