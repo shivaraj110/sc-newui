@@ -1050,7 +1050,7 @@ export default function InventoryScreen() {
                 style={styles.modalSaveButton} 
                 onPress={() => {
                   setShowRecipeFilters(false);
-                  router.push('/(tabs)');
+                  router.push('/inventory/recipes-list' as any);
                 }}
               >
                 <LinearGradient
