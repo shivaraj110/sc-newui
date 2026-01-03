@@ -16,13 +16,23 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSignUp, useOAuth } from '@clerk/clerk-expo';
 import { Link, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
+import { makeRedirectUri } from 'expo-auth-session';
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function SignUpScreen() {
   const { isLoaded, signUp, setActive } = useSignUp();
-  const { startOAuthFlow: startGoogleOAuth } = useOAuth({ strategy: 'oauth_google' });
   const router = useRouter();
+  
+  const redirectUrl = makeRedirectUri({
+    scheme: "sc",
+    path: "auth/sign-up",
+  });
+  
+  const { startOAuthFlow: startGoogleOAuth } = useOAuth({ 
+    strategy: 'oauth_google',
+    redirectUrl,
+  });
 
   const [emailAddress, setEmailAddress] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -68,8 +78,12 @@ export default function SignUpScreen() {
         code,
       });
 
-      await setActive({ session: completeSignUp.createdSessionId });
-      router.replace('/(tabs)');
+      if (completeSignUp.status === 'complete' && completeSignUp.createdSessionId) {
+        await setActive({ session: completeSignUp.createdSessionId });
+        router.replace('/(tabs)');
+      } else {
+        setError('Verification incomplete. Please try again.');
+      }
     } catch (err: any) {
       setError(err.errors?.[0]?.message || 'An error occurred');
     } finally {
@@ -79,11 +93,13 @@ export default function SignUpScreen() {
 
   const onGoogleSignUp = async () => {
     try {
-      const { createdSessionId, setActive } = await startGoogleOAuth();
+      const { createdSessionId, setActive: setActiveSession } = await startGoogleOAuth();
 
-      if (createdSessionId) {
-        await setActive!({ session: createdSessionId });
-        router.replace('/(tabs)');
+      if (createdSessionId && setActiveSession) {
+        await setActiveSession({ session: createdSessionId });
+        setTimeout(() => {
+          router.replace('/(tabs)');
+        }, 100);
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred with Google sign up');

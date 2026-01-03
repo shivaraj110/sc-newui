@@ -13,16 +13,26 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useSignIn, useOAuth } from "@clerk/clerk-expo";
-import { Link, useRouter } from "expo-router";
+import { useSignIn, useOAuth, useAuth } from "@clerk/clerk-expo";
+import { Link, useRouter, Redirect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
+
+import { makeRedirectUri } from "expo-auth-session";
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
+  const { isSignedIn } = useAuth();
+  
+  const redirectUrl = makeRedirectUri({
+    scheme: "sc",
+    path: "auth/sign-in",
+  });
+  
   const { startOAuthFlow: startGoogleOAuth } = useOAuth({
     strategy: "oauth_google",
+    redirectUrl,
   });
   const router = useRouter();
 
@@ -31,6 +41,10 @@ export default function SignInScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  if (isSignedIn) {
+    return <Redirect href="/(tabs)" />;
+  }
 
   const onSignInPress = async () => {
     if (!isLoaded) return;
@@ -55,14 +69,18 @@ export default function SignInScreen() {
 
   const onGoogleSignIn = async () => {
     try {
-      const { createdSessionId, setActive } = await startGoogleOAuth();
+      setLoading(true);
+      setError("");
+      const { createdSessionId, setActive: setActiveSession } = await startGoogleOAuth();
 
-      if (createdSessionId) {
-        await setActive!({ session: createdSessionId });
+      if (createdSessionId && setActiveSession) {
+        await setActiveSession({ session: createdSessionId });
         router.replace("/(tabs)");
       }
     } catch (err: any) {
       setError(err.message || "An error occurred with Google sign in");
+    } finally {
+      setLoading(false);
     }
   };
 

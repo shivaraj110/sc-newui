@@ -11,16 +11,16 @@ export default function TabLayout() {
   const router = useRouter();
 
   useEffect(() => {
-    if (isLoaded && !isSignedIn) {
+    if (isLoaded && isSignedIn === false) {
       router.replace('/auth/sign-in' as any);
     }
   }, [isLoaded, isSignedIn, router]);
 
-  if (!isLoaded) {
+  if (!isLoaded || isSignedIn === undefined) {
     return null;
   }
 
-  if (!isSignedIn) {
+  if (isSignedIn === false) {
     return null;
   }
 
